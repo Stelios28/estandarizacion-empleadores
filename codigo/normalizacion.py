@@ -194,6 +194,13 @@ def clasificar_tipo(texto: str, tokens: list[str],
     if marca:
         return 'ANOTACION', 'anotación del sistema de originación: %s' % marca
 
+    # 2b. A la espera de vínculo laboral: hay un empleador nombrado, pero todavía
+    #     no emplea a esta persona. `ESPERANDO NOMBRAMIENTO EN EL MIN DE EDUCACION`
+    #     se clasificaba como el ministerio. Ver D14.
+    marca = _frase_en(texto, reglas.MARCADORES_ESPERA)
+    if marca:
+        return 'INACTIVO', 'a la espera de vínculo laboral: %s' % marca
+
     # 3. Situación laboral, no empleador
     marca = _frase_en(texto, reglas.MARCADORES_INACTIVO)
     if marca or conjunto & reglas.MARCADORES_INACTIVO:

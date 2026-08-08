@@ -299,6 +299,13 @@ MARCADORES_ANOTACION: set[str] = {
     'NO VERIFICADO', 'POR VERIFICAR', 'ACTUALIZAR', 'REVISAR',
 }
 
+# `ESPERANDO NOMBRAMIENTO EN EL MIN DE EDUCACION` no es el ministerio: es una
+# persona sin vínculo laboral todavía. Se clasificaba como administración pública.
+MARCADORES_ESPERA: set[str] = {
+    'ESPERANDO NOMBRAMIENTO', 'POR NOMBRAR', 'PENDIENTE DE NOMBRAMIENTO',
+    'EN TRAMITE DE NOMBRAMIENTO', 'ESPERA DE NOMBRAMIENTO',
+}
+
 MARCADORES_INDEPENDIENTE: set[str] = {
     'INDEPENDIENTE', 'CUENTA PROPIA', 'POR SU CUENTA', 'AUTONOMO', 'AUTOEMPLEADO',
     'NEGOCIO PROPIO', 'FREELANCE', 'INFORMAL', 'BUHONERO',
@@ -484,6 +491,56 @@ _regla('AUTOMOTRIZ|AUTOS|VEHICULOS|CONCESIONARIO|REPUESTOS|LLANTAS|'
        'LUBRICENTRO|TALLER|TALLERES|AUTOSERVICIO|GASOLINERA|ESTACION DE SERVICIO',
        'G', '45', 'Comercio y reparación de vehículos', 7)
 
+# Peso 3: por debajo de cualquier término que designe una actividad concreta
+# (4-9). `INSTITUTO` se comportaba como específico con peso 9 y mandaba a
+# Enseñanza al Instituto de Recursos Hidráulicos, al de Telecomunicaciones y al
+# de Innovación Agropecuaria. Ahora pierde contra el token que sí describe qué
+# se hace, y solo decide cuando no hay ninguno — que es el caso mayoritario.
+_regla('INSTITUTO', 'P', '85', 'Enseñanza', 3)
+_regla('SUPER', 'G', '47', 'Comercio al por menor', 3)
+_regla('GLOBAL', 'N', '82', 'Actividades de apoyo a empresas', 1)
+
+# --- Desambiguación de tokens genéricos (D14) ------------------------------
+# Estas reglas van por frase, y `por_frase` corre antes que `por_token`: es la
+# forma de que un nombre concreto le gane a una palabra suelta.
+
+# `INSTITUTO` solo (peso 3, más abajo) no clasifica; con estas frases sí.
+_regla('INSTITUTO PROF|INSTITUTO PRACTICO|INSTITUTO POLITECNICO|'
+       'INSTITUTO PROFESIONAL|INSTITUTO TECNICO|INSTITUTO COMERCIAL|'
+       'INSTITUTO EDUCATIVO|INSTITUTO BILINGUE|INSTITUTO PEDAGOGICO|'
+       'INSTITUTO SUPERIOR|INSTITUTO DE ENSENANZA|INSTITUTO AMERICANO|'
+       'INSTITUTO PANAMERICANO|INSTITUTO NACIONAL DE PANAMA',
+       'P', '85', 'Enseñanza', 9)
+_regla('INSTITUTO DE INVESTIGACION|INSTITUTO DE INVESTIGACIONES|'
+       'INSTITUTO DE INNOVACION|INSTITUTO CIENTIFICO|INSTITUTO DE ESTUDIOS',
+       'M', '72', 'Investigación científica y desarrollo', 9)
+_regla('INSTITUTO DE RECURSOS HIDRAULICOS|INSTITUTO DE ACUEDUCTOS',
+       'E', '36', 'Suministro de agua', 9)
+_regla('INSTITUTO DE TELECOMUNICACIONES',
+       'J', '61', 'Telecomunicaciones', 9)
+_regla('INSTITUTO DE SEGUROS|INSTITUTO DE SEGURIDAD SOCIAL',
+       'K', '65', 'Seguros y fondos de pensiones', 9)
+_regla('INSTITUTO ONCOLOGICO|INSTITUTO DE MEDICINA|INSTITUTO NACIONAL DE SALUD',
+       'Q', '86', 'Actividades de atención de la salud humana', 9)
+
+# `SOCIAL SECURITY` es la agencia de pensiones de EE. UU., no vigilancia privada.
+# Aparecía en «Actividades de seguridad e investigación» por el token SECURITY.
+_regla('INSTITUTO DE MERCADEO AGROPECUARIO|INSTITUTO MERCADEO AGROPECUARIO|'
+       'INSTITUTO NACIONAL DE ESTADISTICA|INSTITUTO NACIONAL DE CULTURA|'
+       'INSTITUTO NACIONAL DE DESARROLLO',
+       'O', '84', 'Administración pública', 9)
+_regla('SOCIAL SECURITY|SEGURO SOCIAL DE ESTADOS UNIDOS',
+       'O', '84', 'Administración pública', 9)
+
+# Bancos multilaterales: no intermedian depósitos, son organismos internacionales.
+_regla('BANCO MUNDIAL|BANCO INTERAMERICANO|BANCO DE DESARROLLO DE AMERICA|'
+       'FONDO MONETARIO|CORPORACION ANDINA DE FOMENTO',
+       'U', '99', 'Organizaciones y órganos extraterritoriales', 9)
+
+# `SUPER` seguido de un servicio no es un supermercado.
+_regla('SUPER SERVICE|SUPER SERVICIO|SUPER TALLER',
+       'N', '82', 'Actividades de apoyo a empresas', 9)
+
 # --- H. Transporte ---------------------------------------------------------
 _regla('TRANSPORTE|TRANSPORTES|TRANSPORTISTA|CARGA|MUDANZAS|ACARREOS|BUSES|'
        'TAXI|TAXIS|FERROCARRIL|FERROCARRILES|RAILWAY|RAILWAYS|TRUCKING',
@@ -494,7 +551,7 @@ _regla('AEROLINEA|AEREA|AVIACION|AIRLINES|AIRWAYS|AEROPUERTO',
        'H', '51', 'Transporte aéreo', 8)
 _regla('LOGISTICA|LOGISTIC|LOGISTICS|ALMACENAJE|ALMACENADORA|COURIER|'
        'ENCOMIENDAS|ADUANAS|ADUANERA|ADUANERAS|ADUANERO|ADUANAL|ADUANALES|'
-       'CARGO|FREIGHT|CUSTOMS',
+       'CARGO|FREIGHT|CUSTOMS|FORWARDING|FORWARDER|FORDWARDING',
        'H', '52', 'Almacenamiento y actividades de apoyo al transporte', 8)
 
 # --- I. Alojamiento y comida ----------------------------------------------
@@ -567,7 +624,7 @@ _regla('CAJA DE SEGURO SOCIAL|SEGURO SOCIAL',
        'O', '84', 'Seguridad social obligatoria', 9)
 
 # --- P. Enseñanza ----------------------------------------------------------
-_regla('ESCUELA|COLEGIO|UNIVERSIDAD|INSTITUTO|CENTRO EDUCATIVO|EDUCATIVO|'
+_regla('ESCUELA|COLEGIO|UNIVERSIDAD|CENTRO EDUCATIVO|EDUCATIVO|'
        'EDUCACION|ACADEMIA|PREESCOLAR|GUARDERIA|KINDER|BILINGUE|SCHOOL|'
        'COLLEGE|UNIVERSITY|CAPACITACION|ENSENANZA|LICEO|SEMINARIO|ACADEMY',
        'P', '85', 'Enseñanza', 9)
@@ -926,6 +983,9 @@ GAZETTEER: dict[str, tuple[str, str, str]] = {
     'UNICEF': ('UNICEF Oficina Regional para América Latina y el Caribe', 'U', '99'),
     'UNOPS': ('UNOPS Panamá', 'U', '99'),
     'NACIONES UNIDAS': ('Organización de las Naciones Unidas', 'U', '99'),
+    'DHL': ('DHL Panamá, S.A.', 'H', '52'),
+    'FEDEX': ('FedEx Panamá', 'H', '52'),
+    'UPS': ('UPS Panamá', 'H', '52'),
 
     # --- Formas ya expandidas por ABREVIATURAS -----------------------------
     # `expandir_tokens` corre antes de consultar el gazetteer, así que las siglas

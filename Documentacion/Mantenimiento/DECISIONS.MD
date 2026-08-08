@@ -221,6 +221,75 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D14 — Auditoría de tokens genéricos que se comportaban como específicos
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** tras corregir `INSTITUTO` en D13, Javier preguntó si habría más casos del
+  mismo tipo. Los había. Se auditó el catálogo entero: para cada palabra clave se listaron
+  los nombres que realmente clasificó, ordenados por volumen.
+
+### El patrón
+
+Una palabra puede ser **genérica** (aparece en muchos sectores) y aun así tener peso alto,
+con lo que gana todas las disputas y arrastra al sector equivocado a cientos de registros.
+`INSTITUTO` con peso 9 mandaba a Enseñanza al Instituto de Recursos Hidráulicos, al de
+Telecomunicaciones, al de Innovación Agropecuaria y al Oncológico.
+
+**La corrección no es quitar el token: es bajarle el peso.** Con peso 3, `INSTITUTO` pierde
+contra cualquier término que describa una actividad concreta (4-9) y solo decide cuando no
+hay ninguno — que sigue siendo el caso mayoritario y correcto (`Instituto Justo Arosemena`).
+
+### Hallazgos y correcciones
+
+| Token | Diagnóstico | Corrección | Registros |
+|---|---|---|---:|
+| `INSTITUTO` (peso 9) | Genérico disfrazado de específico | Peso 3 + 8 reglas de frase | 1.352 revisados, 431 reasignados |
+| `SOCIAL SECURITY` | La agencia de pensiones de EE. UU. clasificada como vigilancia privada por el token `SECURITY` | Frase → Administración pública | 78 |
+| `BANCO MUNDIAL`, `BANCO INTERAMERICANO` | Bancos multilaterales en intermediación financiera; no captan depósitos | Frase → Organismos extraterritoriales | 29 |
+| `DHL` | `DHL Global Forwarding` caía en «apoyo a empresas» por el token `GLOBAL` | Al gazetteer → apoyo al transporte; se añadieron `FORWARDING`, `FEDEX`, `UPS` | 121 |
+| `SUPER` (peso 8) | `Super Service` no es un supermercado; `SUPER` significa «grande» | Peso 3 + frase `SUPER SERVICE` | 1.203 revisados |
+| `GLOBAL` | Palabra de relleno con peso de actividad | Peso 1 | 1.132 revisados |
+| `ESPERANDO NOMBRAMIENTO` | «Esperando nombramiento en el Min. de Educación» se clasificaba **como el ministerio**. No hay vínculo laboral todavía | `MARCADORES_ESPERA` → tipo INACTIVO | 266 |
+
+### Un error introducido y detectado en la misma sesión
+
+Bajar `INSTITUTO` a peso 3 hizo que `INSTITUTO PROF TECNICO` cayera en «Reparación de
+computadores»: el token `TECNICO` (peso 5, reparación) le ganaba, y la frase escrita —
+`INSTITUTO PROFESIONAL`— no casaba con la forma abreviada `PROF`. Son escuelas
+vocacionales. Se añadieron `INSTITUTO PROF`, `INSTITUTO PRACTICO` e
+`INSTITUTO POLITECNICO`.
+
+**Vale la pena registrarlo:** bajar un peso no es una operación neutra. Libera las disputas
+que ese token venía ganando, y hay que mirar quién las gana ahora. La verificación no
+termina con el caso que motivó el cambio.
+
+### Reasignaciones de `INSTITUTO`, verificadas una a una
+
+| Destino nuevo | Ejemplo real | ¿Correcto? |
+|---|---|---|
+| Salud humana | Instituto Oncológico, Instituto de Medicina Legal | Sí |
+| Administración pública | Instituto Nacional de Estadística, INADEH | Sí |
+| Investigación científica | Instituto de Innovación Agropecuaria | Sí |
+| Suministro de agua | Instituto de Acueductos (IDAAN) | Sí |
+| Otros servicios personales | Instituto de Belleza, Instituto de Estética | Sí |
+| Actividades deportivas | Instituto Nacional de Deportes (Pandeportes) | Sí |
+| Agencias de viajes | Instituto Panameño de Turismo (IPAT) | Discutible: es el regulador del sector, no un operador. Por el criterio de D13 debería ser administración pública. Queda anotado |
+| Enseñanza (se mantiene) | Instituto Justo Arosemena, IPT | Sí — 828 registros |
+
+### Efecto medido
+
+Cobertura 57,61 % → **57,63 %**. El número casi no se mueve, y ese es justamente el punto:
+**este trabajo no aumenta la cobertura, aumenta la verdad.** 431 registros de `INSTITUTO`,
+121 de DHL, 78 de Social Security, 29 de bancos multilaterales y 266 de espera de
+nombramiento estaban en el sector equivocado y ahora no lo están.
+
+**Lección:** la auditoría que encuentra esto no es mirar métricas agregadas ni muestrear al
+azar. Es listar, para cada regla, qué clasificó realmente, ordenado por volumen. Un error
+sistemático se ve de inmediato en esa vista y es invisible en cualquier otra.
+
+---
+
 ## D13 — Diccionario de empleadores ancla y criterio actividad-sobre-propiedad
 
 - **Fecha:** 2026-08-08

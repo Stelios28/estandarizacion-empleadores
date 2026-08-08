@@ -7,7 +7,7 @@ con score de confianza y explicación por registro.
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo seis correcciones (D8-D13). Solo queda la fase 7 (validación externa), que está
+produjo siete correcciones (D8-D14). Solo queda la fase 7 (validación externa), que está
 construida y probada en su ruta de estimación pero no ejecutada: requiere credencial.
 
 ## Misión activa
@@ -23,7 +23,7 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 | Empleadores identificados | 310.684 · 96,19 % |
 | Empleadores únicos (maestro) | 200.456 |
 | Consolidación de variantes | 35,4 % |
-| Con sector CIIU | 178.979 · 57,61 % de los empleadores |
+| Con sector CIIU | 179.007 · 57,63 % de los empleadores |
 | Confianza promedio / mediana | 49,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
@@ -45,6 +45,8 @@ verificación individual 141.917 (43,9 %).
 - **D12** — `PH` = propiedad horizontal: persona jurídica con planilla, no un inmueble
 - **D13** — Diccionario de 185 empleadores ancla de Panamá; el sector lo decide la
   **actividad del lugar de trabajo, no la propiedad** (criterio INEC / Naciones Unidas)
+- **D14** — Auditoría de tokens genéricos con peso de específicos: `INSTITUTO`, `SUPER`,
+  `GLOBAL`, `SOCIAL SECURITY`, bancos multilaterales, DHL, «esperando nombramiento»
 
 ## Pendientes prioritarios
 - **Alta** — Decidido por negocio: los clústeres de una sola aparición no aportan al
@@ -62,6 +64,8 @@ verificación individual 141.917 (43,9 %).
 - **R3 Truncamiento** — mitigado: 20.532 registros tratados con regla de prefijo asimétrica
 - **R7 Costo fase 7** — acotado: caché persistente, lotes de 40, presupuesto por corrida, prioridad por volumen
 - **R8 Cobertura sectorial 57,6 %** — abierto. Se cierra solo con la fase 7
+- **R11 IPAT en agencias de viajes** — abierto y anotado en D14. Es el regulador del
+  turismo, no un operador; por el criterio de D13 debería ir a administración pública
 - **R9 Etiquetado de estados** — cerrado con D8
 - **R10 Vocabulario de negocio** — abierto por diseño. D12 mostró que hay reglas de dominio
   que no se infieren del corpus; se cierran preguntando, y `reglas.py` está separado del
