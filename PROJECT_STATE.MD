@@ -7,7 +7,7 @@ con score de confianza y explicación por registro.
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo dieciseis correcciones (D8-D23). Solo queda la fase 7 (validación externa), que está
+produjo diecisiete correcciones (D8-D24). Solo queda la fase 7 (validación externa), que está
 construida y probada en su ruta de estimación pero no ejecutada: requiere credencial.
 
 ## Misión activa
@@ -20,10 +20,10 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 | Métrica | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 309.476 · 95,81 % |
+| Empleadores identificados | 309.551 · 95,84 % |
 | Empleadores únicos (maestro) | 200.650 |
 | Consolidación de variantes | 35,5 % |
-| Con sector CIIU | 190.303 · 61,49 % de los empleadores |
+| Con sector CIIU | 190.979 · 61,70 % de los empleadores |
 | Confianza promedio / mediana | 51,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
@@ -64,6 +64,8 @@ verificación individual 130.960 (40,5 %).
   derivado del corpus (3.298 registros), sección T de la CIIU, anotaciones por prefijo
 - **D23** — Muestreo aleatorio como tercera vista: `M S` = Mini Super (463),
   `FINCA` deja de ser dirección (212), `PLANILLA` es nómina y no empleador (62)
+- **D24** — El giro pegado al nombre (`REFRICAR`): nivel nuevo de prefijos
+  comerciales; `INTERAMERICANA` deja de ser token fuerte de dirección (58)
 
 ## Pendientes prioritarios
 - **Alta** — Decidido por negocio: los clústeres de una sola aparición no aportan al

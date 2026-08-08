@@ -125,6 +125,22 @@ def _variante_morfologica(token: str) -> str | None:
     return None
 
 
+def por_prefijo_comercial(tokens: list[str]) -> tuple[str, str, str] | None:
+    """
+    (sección, división, motivo) cuando el giro viene pegado al nombre.
+
+    Va después del token exacto y antes del aproximado: es evidencia más débil que
+    una palabra del catálogo, pero más fuerte que un parecido ortográfico —el
+    prefijo está escrito bien, solo que no llega a ser una palabra suelta.
+    """
+    for t in tokens:
+        r = reglas.por_prefijo_comercial(t)
+        if r:
+            seccion, division, etiqueta, _ = r
+            return seccion, division, 'prefijo comercial en "%s" -> %s' % (t, etiqueta)
+    return None
+
+
 def por_token_aproximado(tokens: list[str]) -> tuple[str, str, str] | None:
     """
     (sección, división, motivo) por coincidencia aproximada con el catálogo.
@@ -182,6 +198,10 @@ def clasificar_cluster(variantes: list[str]) -> tuple[str, str, str, str]:
             (lambda: por_propiedad_horizontal(tokens), 'propiedad_horizontal', 15),
             (lambda: por_frase(nucleo), 'frase', 10),
             (lambda: por_token(tokens), 'token', 0),
+            # Peso 4: por debajo de la mayoría de tokens exactos, por encima del
+            # parecido ortográfico. El prefijo está bien escrito; lo que falta es
+            # que sea una palabra suelta.
+            (lambda: por_prefijo_comercial(tokens), 'prefijo_comercial', 4),
             # Vota con peso 3: menos que cualquier token exacto (4-9), más que
             # nada. Una coincidencia aproximada nunca debe ganarle a una exacta
             # dentro del mismo clúster.
@@ -238,6 +258,7 @@ def clasificar(nucleo: str, tokens: list[str]) -> tuple[str, str, str, str]:
                        (lambda: por_propiedad_horizontal(tokens), 'propiedad_horizontal'),
                        (lambda: por_frase(nucleo), 'frase'),
                        (lambda: por_token(tokens), 'token'),
+                       (lambda: por_prefijo_comercial(tokens), 'prefijo_comercial'),
                        (lambda: por_token_aproximado(tokens), 'token_aproximado')):
         resultado = fn()
         if resultado:

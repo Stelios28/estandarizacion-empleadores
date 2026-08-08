@@ -221,6 +221,116 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D24 - Segunda tirada aleatoria: el giro pegado al nombre
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** segunda iteracion del muestreo aleatorio que estreno D23, con semilla
+  distinta sobre el residuo ya reprocesado.
+
+### Una hipotesis propia, descartada por la evidencia
+
+La idea de entrada era: **si el gazetteer reconoce la entidad, el gazetteer deberia
+vencer a la tipificacion de direccion.** `BANISTMO AVE PERU` es el banco con su
+sucursal, no una avenida.
+
+Al medirla, 36 registros tipificados como direccion contenian una clave del gazetteer.
+Y al leerlos, la mitad eran falsos positivos **del gazetteer**, no de la direccion:
+
+```
+VIA TOCUMEN                      -> Aeropuerto Internacional de Tocumen
+PLAZA TOCUMEN                    -> Aeropuerto Internacional de Tocumen
+BOULEVARD DE ACCESO AEROPUERTO   -> Aeropuerto Internacional de Tocumen
+```
+
+Tocumen es a la vez el aeropuerto, un corregimiento y una via principal. Aplicar la
+regla tal cual habria empeorado el resultado.
+
+`TOCUMEN` sale del gazetteer como clave suelta —queda `AEROPUERTO TOCUMEN`— por el
+mismo motivo por el que salieron `ARROCHA` y `RICARDO PEREZ` en D15: **el toponimo o
+el apellido solo no identifican a la entidad**. Con eso hecho, la guarda si se pudo
+activar, y ahora `BANISTMO AVE PERU`, `RIBA SMITH TRANSISTMICA`, `CAJA DE AHORROS VIA
+ESPANA` y `CREDICORP BANK CALLE 50` son empleadores.
+
+**El orden importaba: la regla nueva era correcta, pero no se podia activar sin
+arreglar antes el dato que consultaba.**
+
+### `INTERAMERICANA` era token *fuerte* de direccion
+
+58 registros iban a «no identificable» por esa palabra. Al leerlos, casi ninguno es la
+carretera:
+
+```
+UNV INTERAMERICANA          UNIVERCUDAD INTERAMERICANA 5      U INTERAMERICANA 6
+T SHIRTS INTERAMERICANA     COMISION INTERAMERICANA DE ATUN TROPICAL
+SOC INTERAMERICANA DE AGUAS AUTO CENTRO INTERAMERICANA
+```
+
+Es la Universidad Interamericana, la comision del atun y un puñado de empresas. La via
+se escribe `AV INTERAMERICANA`, y ahi el `AV` fuerte ya hace el trabajo. Baja a debil.
+
+Tercera vez que aparece el mismo patron de D10: una palabra que dos categorias se
+disputan, con el ganador elegido implicitamente y mal.
+
+### El giro pegado al nombre: un mecanismo nuevo
+
+El comercio panameño bautiza los negocios pegando el giro delante del nombre:
+
+```
+REFRICAR   REFRIAIRE   REFRIHOGAR   REFRITODO   REFRIPARTES
+REFRICENTRO   REFRIAUTO   REFRITEC   REFRIGAS   REFRIVIALCA
+```
+
+136 registros sin sector, y ninguno coincide con un token del catalogo porque **el giro
+no llega a ser una palabra**: es una silaba pegada a otra cosa. Ni el token exacto ni
+el parecido ortografico lo alcanzan — `REFRICAR` no se parece a `REFRIGERACION`.
+
+Se añadio `PREFIJOS_CIIU` y un nivel nuevo en la cascada, `por_prefijo_comercial`,
+entre el token exacto y el aproximado. Vota con peso 4: mas que un parecido
+ortografico, menos que una palabra del catalogo. El prefijo esta escrito bien; lo que
+le falta es ser una palabra suelta.
+
+Solo entran prefijos **inequivocos**. `REFRI` unicamente puede ser refrigeracion.
+`SERVI`, `MULTI` y `DISTRI` se dejaron fuera a proposito: `SERVIPAR` es un
+estacionamiento y `MULTIBANK` es un banco — el prefijo no dice de que van.
+
+Y va a F/43, no a S/95, porque `REFRIGERACION` ya estaba en el catalogo como
+instalacion especializada. Partir la familia en dos secciones habria sido incoherente
+con la regla que ya existia.
+
+### Vocabulario: la gasolinera panameña
+
+455 registros traian `ESTACION` o `SERVICENTRO` y se quedaban sin sector.
+`SERVICENTRO` —que es como se llama la gasolinera en Panama— no estaba en el catalogo.
+
+`ESTACION` sola no basta: hay estacion de bus, de policia, y `GRAN ESTACION` es un
+centro comercial. Se resolvio con frases (`ESTACION TEXACO`, `ESTACION SHELL`,
+`ESTACION DE COMBUSTIBLE`) mas las marcas sueltas, que se evaluan antes que los tokens.
+
+Tambien entraron `GRUAS`, `PARKING` y `ESTACIONAMIENTO` (125 registros, H/52) y
+`AUTOREPUESTO` (G/45).
+
+### Efecto medido
+
+| | Antes (D23) | Despues |
+|---|---:|---:|
+| Con sector CIIU | 190.303 | **190.979** |
+| Cobertura sobre empleadores | 61,49 % | **61,70 %** |
+| No identificable | 1.849 | **1.774** |
+| Empleador sin sector | 125.140 | **124.546** |
+| Empleadores identificados | 309.476 | **309.551** |
+
+### Lo que llevan dos tiradas aleatorias
+
+D23 y D24 juntas: **+1.525 registros con sector, −300 no identificables**, y dos
+mecanismos nuevos que no existian (siglas partidas al inicio, prefijos comerciales).
+
+El muestreo aleatorio encuentra lo que no se puede buscar porque no se sabe que existe.
+`M S` son dos letras sueltas; `REFRICAR` no se parece a ninguna palabra del catalogo.
+Ningun conteo de frecuencias ni ninguna lectura alfabetica los habria sacado.
+
+---
+
 ## D23 - Muestreo aleatorio: lo que el conteo por frecuencia no ensena
 
 - **Fecha:** 2026-08-08

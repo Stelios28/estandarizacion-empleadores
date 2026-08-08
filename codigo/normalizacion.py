@@ -12,6 +12,7 @@ import re
 import unicodedata
 from dataclasses import dataclass, field
 
+import canonico
 import reglas
 
 # --------------------------------------------------------------------------
@@ -274,7 +275,13 @@ def clasificar_tipo(texto: str, tokens: list[str],
     #     `LA CASA DEL CHAPISTERO`). Una casa como dirección lleva número.
     #  d) Una propiedad horizontal encabezada por `PH` es una persona jurídica
     #     con planilla propia (Ley 31 de 2010), no un inmueble. Ver D12.
-    if not sufijo_societario and not reglas.es_propiedad_horizontal(tokens):
+    #  e) Si el gazetteer reconoce la entidad, manda el gazetteer: `BANISTMO AVE
+    #     PERU` es el banco con su sucursal, `RIBA SMITH TRANSISTMICA` el
+    #     supermercado con la suya. La dirección ahí es el complemento, no el
+    #     sujeto. Esta guarda no se pudo activar hasta quitar `TOCUMEN` como clave
+    #     suelta: mientras estuvo, `VIA TOCUMEN` se leía como el aeropuerto (D24).
+    if (not sufijo_societario and not reglas.es_propiedad_horizontal(tokens)
+            and not canonico.buscar_gazetteer(tokens)):
         fuertes = conjunto & reglas.TOKENS_DIRECCION_FUERTES
         debiles = (conjunto & reglas.TOKENS_DIRECCION_DEBILES) - _casa_de_giro(tokens)
 

@@ -258,7 +258,7 @@ def es_propiedad_horizontal(tokens: list[str]) -> bool:
 
 TOKENS_DIRECCION_FUERTES: set[str] = {
     'CALLE', 'AVENIDA', 'AVE', 'AV', 'CARRETERA', 'AUTOPISTA', 'TRANSISTMICA',
-    'INTERAMERICANA', 'CORREGIMIENTO', 'BARRIADA', 'URBANIZACION', 'URB',
+    'CORREGIMIENTO', 'BARRIADA', 'URBANIZACION', 'URB',
     'BOULEVARD', 'BULEVAR', 'CALLEJON', 'SENDERO', 'DIAGONAL',
 }
 
@@ -267,6 +267,12 @@ TOKENS_DIRECCION_DEBILES: set[str] = {
     'TORRE', 'PLAZA', 'ENTRADA', 'FRENTE', 'DETRAS', 'CONTIGUO', 'ALTOS',
     'RESIDENCIAL', 'BARRIO', 'VIA', 'KM', 'KILOMETRO', 'NO', 'NRO', 'NUMERO',
     'SECTOR', 'MANZANA', 'LOTE', 'PARQUE',
+    # `INTERAMERICANA` bajó de fuerte a débil. Como fuerte mandaba 58 registros a
+    # «no identificable», y al leerlos casi ninguno es la carretera: es la
+    # Universidad Interamericana (`UNV INTERAMERICANA`, `U INTERAMERICANA`), la
+    # Comisión Interamericana del Atún, `T SHIRTS INTERAMERICANA`. La vía se
+    # escribe `AV INTERAMERICANA`, y ahí el `AV` fuerte ya hace el trabajo (D24).
+    'INTERAMERICANA',
     # `FINCA` estaba aquí y mandaba 212 registros a «no identificable - dirección».
     # Pero `FINCA LA CEIBA` y `FINCA LOS LIMONES` no son la dirección de nadie: son
     # el lugar de trabajo, y su actividad es la agricultura. En Panamá la finca es
@@ -596,8 +602,25 @@ _regla('DISTRIBUIDORA|DISTRIBUIDOR|MAYORISTA|COMERCIALIZADORA|IMPORTADORA|'
        'EXPORTADORA|IMPORT|EXPORT|TRADING|SUMINISTROS|PROVEEDORES|'
        'REPRESENTACIONES', 'G', '46', 'Comercio al por mayor', 7)
 _regla('AUTOMOTRIZ|AUTOS|VEHICULOS|CONCESIONARIO|REPUESTOS|LLANTAS|'
-       'LUBRICENTRO|TALLER|TALLERES|AUTOSERVICIO|GASOLINERA|ESTACION DE SERVICIO',
+       'LUBRICENTRO|TALLER|TALLERES|AUTOSERVICIO|GASOLINERA|ESTACION DE SERVICIO|'
+       # `SERVICENTRO` es la gasolinera panameña y no estaba. Con `AUTOREPUESTO`
+       # y las marcas de combustible: 455 registros traían `ESTACION` o
+       # `SERVICENTRO` y se quedaban sin sector (D24).
+       'SERVICENTRO|AUTOREPUESTO|AUTOREPUESTOS|AUTOPARTES|RECTIFICADORA|'
+       'TEXACO|ESSO|TERPEL|ACCEL|PETROAMERICA|SILVER STAR',
        'G', '45', 'Comercio y reparación de vehículos', 7)
+# `ESTACION` sola no basta —hay estación de bus, de policía y `GRAN ESTACION`, que
+# es un centro comercial— pero acompañada de la marca o de la palabra combustible
+# no deja duda. Las frases se evalúan antes que los tokens.
+_regla('ESTACION DE COMBUSTIBLE|ESTACION SHELL|ESTACION TEXACO|ESTACION ESSO|'
+       'ESTACION PUMA|ESTACION TERPEL|ESTACION DELTA|ESTACION ACCEL|'
+       'ESTACION DE GASOLINA|BOMBA DE COMBUSTIBLE',
+       'G', '45', 'Comercio y reparación de vehículos', 8)
+# Grúas y estacionamientos: servicio de apoyo al transporte, no transporte de
+# pasajeros. 125 registros sin sector.
+_regla('GRUA|GRUAS|PARKING|ESTACIONAMIENTO|ESTACIONAMIENTOS|APARCAMIENTO|'
+       'REMOLQUE|REMOLQUES', 'H', '52',
+       'Almacenamiento y actividades de apoyo al transporte', 7)
 
 # Peso 3: por debajo de cualquier término que designe una actividad concreta
 # (4-9). `INSTITUTO` se comportaba como específico con peso 9 y mandaba a
@@ -1191,7 +1214,13 @@ GAZETTEER: dict[str, tuple[str, str, str]] = {
     'EMPRESA TRANSMISION ELECTRICA': ('Empresa de Transmisión Eléctrica, S.A.', 'D', '35'),
     'AUTORIDAD ASEO URBANO DOMICILIARIO': ('Autoridad de Aseo Urbano y Domiciliario', 'E', '38'),
     'AAUD': ('Autoridad de Aseo Urbano y Domiciliario', 'E', '38'),
-    'TOCUMEN': ('Aeropuerto Internacional de Tocumen, S.A.', 'H', '52'),
+    # `TOCUMEN` a secas salió del gazetteer: es también un corregimiento y una vía
+    # principal, y hacía que `VIA TOCUMEN`, `PLAZA TOCUMEN` y `NUEVO TOCUMEN`
+    # —direcciones— se leyeran como el aeropuerto. Mismo motivo por el que salieron
+    # `ARROCHA` y `RICARDO PEREZ`: el apellido o el topónimo solo no basta (D24).
+    'AEROPUERTO TOCUMEN': ('Aeropuerto Internacional de Tocumen, S.A.', 'H', '52'),
+    'AEROPUERTO INTERNACIONAL TOCUMEN': (
+        'Aeropuerto Internacional de Tocumen, S.A.', 'H', '52'),
     'INSTITUTO CONMEMORATIVO GORGAS': ('Instituto Conmemorativo Gorgas', 'M', '72'),
     'SERTV': ('Sistema Estatal de Radio y Televisión', 'J', '60'),
     'UNIVERSIDAD AUTONOMA CHIRIQUI': ('Universidad Autónoma de Chiriquí', 'P', '85'),
@@ -1557,3 +1586,40 @@ def corregir_erratas(tokens: list[str]) -> tuple[list[str], bool]:
     """Devuelve los tokens con las erratas corregidas, y si hubo cambio."""
     salida = [_corregir_token(t) for t in tokens]
     return salida, salida != tokens
+
+
+# ==========================================================================
+# 13. Prefijos comerciales (D24)
+# ==========================================================================
+# El comercio panameño bautiza los negocios pegando el giro delante del nombre:
+# `REFRICAR`, `REFRIAIRE`, `REFRIHOGAR`, `REFRITODO`, `REFRIPARTES`, `REFRICENTRO`.
+# Son 136 registros sin sector y ninguno coincide con un token del catálogo, porque
+# el giro no llega a ser una palabra: es una sílaba pegada a otra cosa.
+#
+# Solo entran prefijos **inequívocos**: `REFRI` únicamente puede ser refrigeración.
+# `SERVI`, `MULTI` y `DISTRI` se dejaron fuera a propósito — `SERVIPAR` es
+# estacionamiento y `MULTIBANK` es un banco; el prefijo no dice de qué van.
+#
+# El largo mínimo evita que el prefijo se coma la palabra entera: `REFRI` a secas
+# no dispara, `REFRICAR` sí.
+PREFIJOS_CIIU: list[tuple[str, str, str, str, int]] = [
+    # F/43 y no S/95: `REFRIGERACION` ya está en el catálogo como instalación
+    # especializada, y `REFRICAR` es la misma familia escrita pegada. Partirlas
+    # en dos secciones sería incoherente con la regla que ya existe.
+    ('REFRI', 'F', '43', 'Actividades especializadas de construcción', 6),
+    ('AGROVET', 'M', '75', 'Actividades veterinarias', 7),
+    ('AUTOREPUEST', 'G', '45', 'Comercio y reparación de vehículos', 7),
+]
+
+_LARGO_MIN_PREFIJO = 2   # caracteres que el token debe tener *además* del prefijo
+
+
+def por_prefijo_comercial(token: str) -> tuple[str, str, str, int] | None:
+    """Sección, división, etiqueta y peso si el token arranca con un giro pegado."""
+    if token in REGLAS_CIIU:
+        return None
+    for prefijo, seccion, division, etiqueta, peso in PREFIJOS_CIIU:
+        if (token.startswith(prefijo)
+                and len(token) >= len(prefijo) + _LARGO_MIN_PREFIJO):
+            return seccion, division, etiqueta, peso
+    return None

@@ -41,6 +41,7 @@ FACTOR_SECTOR = {
     'token': 0.80,                 # una palabra clave; se ajusta por peso más abajo
     'propagacion_duda': 0.58,       # hereda de un vecino 76-88% similar: plausible, no probado
     'token_aproximado': 0.62,      # errata o variante morfológica: evidencia real, más débil
+    'prefijo_comercial': 0.70,     # el giro pegado al nombre (`REFRICAR`): escrito bien, no es palabra
     'llm_alta': 0.90,
     'llm_media': 0.72,
     'llm_baja': 0.50,
