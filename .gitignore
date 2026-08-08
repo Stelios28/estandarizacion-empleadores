@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# Datos de origen — NO se versionan
+# ---------------------------------------------------------------------------
+# El dataset contiene 323.001 nombres de empleadores extraídos de la cartera de
+# clientes de una entidad financiera. Es información confidencial del negocio:
+# no entra al repositorio, ni siquiera en uno privado. El pipeline lo lee de la
+# raíz del proyecto; ver README.
+prueba_tecnica_ing_datos.xlsx
+Prueba tecnica.docx
+datos/
+
+# ---------------------------------------------------------------------------
+# Salidas del pipeline — regenerables, y contienen los mismos datos de origen
+# ---------------------------------------------------------------------------
+# `dataset_resultado` y `maestro_corporativo` incluyen `nombre_original` literal.
+# Se excluyen por confidencialidad y por tamaño (75 MB). Se regeneran corriendo
+# el pipeline. Los agregados sin datos individuales sí se versionan.
+salidas/dataset_resultado.csv
+salidas/dataset_resultado.xlsx
+salidas/maestro_corporativo.csv
+salidas/tabla_auditoria.csv.gz
+
+# Intermedios de cada fase: reproducibles desde la fuente
+trabajo/
+
+# ---------------------------------------------------------------------------
+# Entorno y artefactos locales
+# ---------------------------------------------------------------------------
+.venv/
+__pycache__/
+*.py[cod]
+.env
+
+# Archivos de bloqueo de Excel
+~$*
+
+# ---------------------------------------------------------------------------
+# Documentos personales, ajenos al entregable
+# ---------------------------------------------------------------------------
+Javier.md
+Context_Optimizer_Generico.md
