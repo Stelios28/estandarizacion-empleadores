@@ -221,6 +221,123 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D22 - Lo que se encuentra en el bloque chico casi siempre paga en el grande
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** *«lo que quiero ver es que aun en eso que declaras como no identificable
+  yo logro identificar algo que tambien se aplique a lo que categorizas como validacion
+  externa pendiente»*.
+
+### La hipotesis, y como se midio
+
+Javier venia revisando 2.074 registros «no identificables» y sospechaba que lo que
+encontrara ahi valia tambien para los 125.758 sin sector. Se midio cruzando el
+vocabulario de los tres bloques sin resolver. Tenia razon, y por un margen grande:
+
+| Familia | Sin sector | No identif. | Sit. laboral |
+|---|---:|---:|---:|
+| `CASA DE FAMILIA` / `DOMESTICA` | 270 | 1 | 5 |
+| `JUBILAD*` / `PENSION*` truncado | 213 | 0 | 2.333 |
+| `DEPENDIENTE DE ...` | 184 | 0 | 331 |
+| `AUTORIDAD DEL CANAL` y erratas | 107 | 0 | 53 |
+| `DUTY FREE` | 78 | 0 | 0 |
+| `C S S` con las letras sueltas | 58 | 1 | 192 |
+
+Cada una se veia primero en el bloque de 2.000 -donde se lee entero en una tarde- y
+vivia despues en el de 125.000, donde nadie la habria encontrado leyendo.
+
+**El bloque chico no es el problema: es el microscopio.**
+
+### Cinco correcciones
+
+**1. `C S S` -> `CSS`.** Caja de Seguro Social escrita letra por letra, 56 registros.
+Es exactamente el defecto de `P H` que corrigio D12 - el mismo patron, diez decisiones
+despues. `IN DEPENDIENTE` entro a la misma lista: es `INDEPENDIENTE` partido, no un
+dependiente economico, y el orden de las reglas importa para no invertirlo.
+
+**2. Seccion T de la CIIU, que estaba desaprovechada.** `CASA DE FAMILIA MARTINELLI`
+si declara un empleador: el hogar. La CIIU tiene la seccion T justamente para eso y
+solo la alcanzaban las frases largas (`EMPLEADA DOMESTICA`). Con `CASA DE FAMILIA`,
+`CASA FAMILIAR` y `DOMESTICA` sueltos pasa de 37 a 298 registros.
+
+**3. `DUTY FREE` -> comercio al por menor.** 101 nombres distintos de la Zona Libre y
+el aeropuerto, ninguno con otra palabra de actividad.
+
+**4. Anotaciones por prefijo.** El dependiente economico se escribe de 184 formas
+(`DEPENDIENTE DE SU ESPOSA`, `DEPENDIENTE ECONIMICO DE UN TE`, `DEPENDIENTE ECOMONICO`)
+y ninguna coincidia con una frase completa, asi que los 184 entraban al maestro como
+empresas. Lo estable no es la frase entera: es como **empieza** el registro.
+
+**5. La truncacion del origen, atacada por la raiz.** El campo viene cortado a 30
+caracteres, asi que las palabras largas llegan sin final: `INDEPENDIENT`, `JUBILADS`,
+`JUBILADACSS`. Enumerar variantes no escala; enumerar la **raiz** si, porque la
+truncacion corta siempre por el mismo lado.
+
+### El corrector de erratas, que es lo que de verdad cambio las cifras
+
+Midiendo la distancia entre tokens raros y palabras institucionales frecuentes
+aparecieron **1.022 variantes mal escritas de 19 palabras, en 3.298 registros**:
+
+```
+CONSTRUCTURA - COSNTRUCTORA - CONSTRUTORA - COSTRUCTORA - CONTRUCTOR
+MINSTERIO - MINITERIO - MINISTERI - MINSITERIO - MINISTERO
+INDEPENDIETE - IDEPENDIENTE - INDEPNDIENTE - INDENDIENTE - INDEPENDINETE
+```
+
+Enumerarlas seria una lista muerta: la 1.023 llega con el proximo lote. Lo que se
+enumera es el **destino**, y ni siquiera a mano - las dianas salen de la base de
+conocimiento que ya existia (tokens CIIU de peso >=7 y marcadores de situacion). No
+hay lista de erratas en ninguna parte del codigo.
+
+Se aplica en la limpieza, arriba de todo, para que las tres capas de abajo
+-tipificacion, situacion laboral y sector- lo vean ya resuelto. Efecto secundario
+mas valioso que el buscado: las 47 formas de `CONSTRUCTORA` dejan de ser 47 claves
+distintas y el maestro se consolida.
+
+### Cuatro guardas, dos de ellas obligatorias
+
+La primera version se probo **en seco** contra el corpus antes de tocar el pipeline.
+Menos mal:
+
+| Sustitucion propuesta | Registros | Por que esta mal |
+|---|---:|---|
+| `DEPENDIENTE` -> `INDEPENDIENTE` | 531 | Son **opuestos**. El que vive de otro convertido en trabajador por cuenta propia |
+| `CONSULTOR` -> `CONSULTORIO` | 128 | El consultor asesora empresas (M/70); el consultorio atiende pacientes (Q/86) |
+| `CASTILLERO` -> `ASTILLERO` | 42 | Castillero es un apellido panameno corriente |
+| `COMERCIAL` -> `COMERCIALES` | 1.045 | Un plural no es una errata |
+
+Las guardas que quedaron: token de 8+ caracteres, token que ninguna regla reconozca ya,
+umbral 90 -a 85 entra `DEPEDIENTE -> INDEPENDIENTE`-, y **ninguno de los dos puede ser
+prefijo ni sufijo del otro**. Esa ultima sola evita 2.100 sustituciones.
+
+**La leccion: una correccion difusa se prueba en seco y se lee la cola, no la cabeza.**
+Los 40 casos mas frecuentes se veian todos bien. Los cuatro errores estaban entre ellos
+y en la muestra aleatoria de la cola larga.
+
+### Una hoja nueva en el archivo de revision
+
+`revision_pendiente.xlsx` estrena la hoja **`vocabulario`**: cada palabra con su conteo
+en los tres bloques, lado a lado. Revisar alfabeticamente encuentra las familias pero
+no dice cuanto pesa cada hallazgo; esta hoja lo dice antes de escribir la regla.
+
+### Efecto medido
+
+| | Antes | Despues |
+|---|---:|---:|
+| Con sector CIIU | 188.951 | **189.454** |
+| Cobertura sobre empleadores | 60,76 % | **61,26 %** |
+| Empleadores unicos (maestro) | 200.613 | **198.687** |
+| Consolidacion | 35,5 % | **35,8 %** |
+| Seccion T (hogares empleadores) | 37 | **298** |
+
+Y una cifra que **baja**: empleadores identificados, de 310.999 a 309.251. No es una
+regresion, es lo contrario: 1.748 registros que se contaban como empresas eran
+dependientes economicos, jubilados e independientes con la palabra truncada. La tasa
+de identificacion baja de 96,28 % a 95,74 % porque antes estaba inflada.
+
+---
+
 ## D21 — Corrección de D20: el archivo de revisión filtraba al revés
 
 - **Fecha:** 2026-08-08

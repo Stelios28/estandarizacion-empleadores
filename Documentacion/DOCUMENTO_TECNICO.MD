@@ -15,10 +15,10 @@ cada decisión.
 | Resultado | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 310.999 · **96,28 %** |
+| Empleadores identificados | 309.251 · **95,74 %** |
 | Empleadores únicos en el maestro | 200.650 |
 | Consolidación de variantes | **35,4 %** |
-| Con sector CIIU asignado | 188.951 · **60,8 %** de los empleadores |
+| Con sector CIIU asignado | 189.454 · **61,3 %** de los empleadores |
 | Tiempo total de ejecución | **~2 minutos** en un portátil |
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 

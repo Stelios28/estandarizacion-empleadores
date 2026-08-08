@@ -98,6 +98,24 @@ def limpiar(crudo: str) -> tuple[str, list[str]]:
             colapsado = nuevo
             traza.append(marca)
 
+    # El origen trunca a 30 caracteres: `INDEPENDIENT`, `JUBILADS`. Se completan
+    # aquí, antes de tokenizar, para que las tres capas de abajo —tipificación,
+    # situación laboral y sector— lo vean ya resuelto. Una sola corrección que
+    # sirve a las tres, en lugar de una lista de erratas por capa (D22).
+    completos, hubo = reglas.completar_truncadas(colapsado.split())
+    if hubo:
+        colapsado = ' '.join(completos)
+        traza.append('raiz_truncada_completada')
+
+    # Erratas de las palabras institucionales largas: `CONTRUCTORA`, `MINSTERIO`,
+    # `TRASPORTE`. Mismo criterio que arriba —se corrige una vez, arriba de todo—
+    # y por eso también sirve al agrupamiento: las 47 formas de `CONSTRUCTORA`
+    # dejan de ser 47 claves distintas.
+    corregidos, hubo = reglas.corregir_erratas(colapsado.split())
+    if hubo:
+        colapsado = ' '.join(corregidos)
+        traza.append('errata_corregida')
+
     return colapsado, traza
 
 
@@ -193,6 +211,9 @@ def clasificar_tipo(texto: str, tokens: list[str],
     marca = _frase_en(texto, reglas.MARCADORES_ANOTACION)
     if marca:
         return 'ANOTACION', 'anotación del sistema de originación: %s' % marca
+    prefijo, _ = reglas.prefijo_anotacion(texto)
+    if prefijo:
+        return 'ANOTACION', 'anotación del sistema, por prefijo: %s' % prefijo.strip()
 
     # 2b. A la espera de vínculo laboral: hay un empleador nombrado, pero todavía
     #     no emplea a esta persona. `ESPERANDO NOMBRAMIENTO EN EL MIN DE EDUCACION`

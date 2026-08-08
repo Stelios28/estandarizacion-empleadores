@@ -12,7 +12,10 @@ debe poder revisar y ampliar sin tocar el motor.
 """
 from __future__ import annotations
 
+import functools
 import re
+
+from rapidfuzz import fuzz, process
 
 # ==========================================================================
 # 1. Sufijos societarios
@@ -171,7 +174,45 @@ TOKEN_PROPIEDAD_HORIZONTAL = 'PH'
 # `PH MULTIPLAZA` y el nombre canónico sale como «P H Multiplaza».
 SIGLAS_SEPARADAS: list[tuple[re.Pattern, str, str]] = [
     (re.compile(r'\bP\s+H\b'), 'PH', 'sigla_PH_unida'),
+    # `C S S` = Caja de Seguro Social. 56 registros la escriben letra por letra
+    # (`C S S LOS SANTOS`, `JUB C S S`, `COMPLEJO HOSPITALARIO C S S`) y ninguno
+    # coincidía con `CSS`, que sí está en el gazetteer. Mismo defecto que `P H`,
+    # encontrado tres decisiones después: el patrón se repite, no era un caso
+    # aislado (D22).
+    (re.compile(r'\bC\s+S\s+S\b'), 'CSS', 'sigla_CSS_unida'),
+    # `IN DEPENDIENTE` es `INDEPENDIENTE` partido, no un dependiente económico.
+    # Va antes que cualquier regla sobre `DEPENDIENTE` para no invertir el sentido.
+    (re.compile(r'\bIN\s+DEPENDIENTE\b'), 'INDEPENDIENTE', 'IN_DEPENDIENTE_unido'),
 ]
+
+# --- Truncación del origen -------------------------------------------------
+# El campo viene cortado a 30 caracteres, así que las palabras largas llegan sin
+# final: `INDEPENDIENT`, `INDEPENDIEN`, `JUBILADS`, `JUBILADACSS`. Enumerar cada
+# variante no escala —son cientos y siempre aparece una nueva—; enumerar la
+# **raíz** sí, porque la truncación corta siempre por el final.
+#
+# Cada raíz tiene 7 caracteres o más: con menos empieza a tocar palabras ajenas
+# (`ESTUDIANT` capturaría `ESTUDIANTIL`, que es un adjetivo de negocio).
+RAICES_TRUNCADAS: list[tuple[str, str]] = [
+    ('INDEPENDIEN', 'INDEPENDIENTE'),
+    ('JUBILAD', 'JUBILADO'),
+    ('PENSIONAD', 'PENSIONADO'),
+    ('DESEMPLEAD', 'DESEMPLEADO'),
+]
+
+
+def completar_truncadas(tokens: list[str]) -> tuple[list[str], bool]:
+    """Devuelve los tokens con las raíces truncadas completadas, y si hubo cambio."""
+    salida, cambio = [], False
+    for t in tokens:
+        for raiz, completa in RAICES_TRUNCADAS:
+            if t != completa and t.startswith(raiz):
+                salida.append(completa)
+                cambio = True
+                break
+        else:
+            salida.append(t)
+    return salida, cambio
 
 # Lo que sí convierte una PH en domicilio particular: la unidad dentro del edificio.
 # `PH VERTIKAL AP 26B` es la casa de alguien; `PH Vertikal` es la entidad.
@@ -309,6 +350,26 @@ MARCADORES_ANOTACION: set[str] = {
     'DEPENDIENTE', 'MENOR', 'CLIENTE', 'CUENTA CANCELADA', 'CUENTA CERRADA',
     'NO VERIFICADO', 'POR VERIFICAR', 'ACTUALIZAR', 'REVISAR',
 }
+
+# El dependiente económico se escribe de 184 maneras distintas —`DEPENDIENTE DE SU
+# ESPOSA`, `DEPENDIENTE ECONIMICO DE UN TE`, `DEPENDIENTE ECOMONICO`, `DEPENDIENTE
+# TERCERA EDAD`— y ninguna coincidía con una frase completa, así que los 184
+# entraron al maestro corporativo como si fueran empresas. Lo estable no es la
+# frase entera: es cómo **empieza** el registro (D22).
+#
+# Falso positivo conocido y aceptado: `DEPENDIENTE DE CAMBIO` (1 registro) es un
+# dependiente de casa de cambio. Uno contra 184.
+PREFIJOS_ANOTACION: list[tuple[str, str]] = [
+    ('DEPENDIENTE ', 'Dependiente económico'),
+]
+
+
+def prefijo_anotacion(texto: str) -> tuple[str, str]:
+    """Devuelve (prefijo, etiqueta) si el registro arranca con una anotación."""
+    for prefijo, etiqueta in PREFIJOS_ANOTACION:
+        if texto.startswith(prefijo):
+            return prefijo, etiqueta
+    return '', ''
 
 # `ESPERANDO NOMBRAMIENTO EN EL MIN DE EDUCACION` no es el ministerio: es una
 # persona sin vínculo laboral todavía. Se clasificaba como administración pública.
@@ -517,6 +578,11 @@ _regla('INSTITUTO', 'P', '85', 'Enseñanza', 3)
 # EMPALME` volvía a clasificarse como dirección porque `PARQUE` le ganaba.
 _regla('SUPER|MINISUPER|MINISUPERMERCADO|SUPERETTE', 'G', '47',
        'Comercio al por menor', 7)
+# La Zona Libre de Colón y el aeropuerto: 101 nombres distintos con `DUTY FREE`
+# y ninguna palabra de actividad además de esa (`AROMAS DUTY FREE`, `DORADO DUTY
+# FREE SA`). Es comercio al por menor sin ambigüedad posible (D22).
+_regla('DUTY FREE|DUTYFREE|LIBRE DE IMPUESTOS', 'G', '47',
+       'Comercio al por menor', 8)
 _regla('GLOBAL', 'N', '82', 'Actividades de apoyo a empresas', 1)
 
 # Ampliación del vocabulario de oficios con el tramo alfabético A-B (D20).
@@ -587,6 +653,13 @@ _regla('AGRIMENSOR|AGRIMENSURA|TOPOGRAFO|ARQUITECTO|ARQUITECTA|'
        'INGENIERO|INGENIERA', 'M', '71', 'Arquitectura e ingeniería', 8)
 _regla('EMPLEADA DOMESTICA|EMPLEADO DOMESTICO|TRABAJADORA DOMESTICA|'
        'SERVICIO DOMESTICO|NINERA', 'T', '97', 'Hogares como empleadores', 8)
+# `CASA DE FAMILIA MARTINELLI` sí declara un empleador: el hogar. La sección T de
+# la CIIU existe justamente para eso, y estaba desaprovechada porque solo la
+# alcanzaban las frases largas. 270 registros del bloque sin sector caen aquí
+# (D22). `CASA` sola no entra: la ataja `_casa_de_giro` (`CASA DE EMPENO`).
+_regla('CASA DE FAMILIA|CASA FAMILIAR|CASA FAMILIA|CASA DE FLIA|'
+       'DOMESTICA|DOMESTICO|DOMESTICAS|SERV DOMESTICO',
+       'T', '97', 'Hogares como empleadores', 7)
 _regla('COCINERO|COCINERA|REPOSTERO|REPOSTERA|PANADERO|CHEF|'
        'VENTA DE COMIDA|COMIDA RAPIDA', 'I', '56',
        'Servicio de comidas y bebidas', 8)
@@ -1310,7 +1383,10 @@ def categoria_situacion(texto: str, tokens: list[str]) -> str:
                 return etiqueta
         if conjunto & marcadores:
             return etiqueta
-    return ''
+    # Las anotaciones por prefijo se resuelven después de los grupos: `AMA DE CASA
+    # DEPENDIENTE DE SU ESPOSO` es un ama de casa, no un dependiente.
+    _, etiqueta = prefijo_anotacion(texto)
+    return etiqueta
 
 
 SECTOR_DIRECCION = 'No identificable - Direcciones'
@@ -1347,3 +1423,97 @@ AGREGADO_EJECUTIVO: dict[str, str] = {
     'T': 'Hogares empleadores',
     'U': 'Organismos internacionales',
 }
+
+
+# ==========================================================================
+# 12. Erratas de las palabras institucionales (D22)
+# ==========================================================================
+# El origen es captura libre de un ejecutivo de cuenta escribiendo a mano, y las
+# palabras largas son las que más se equivocan. Medido sobre el corpus: 1.022
+# variantes mal escritas de 19 palabras frecuentes, en **3.298 registros**.
+#
+#   CONSTRUCTURA · COSNTRUCTORA · CONSTRUTORA · COSTRUCTORA · CONTRUCTOR
+#   MINSTERIO · MINITERIO · MINISTERI · MINSITERIO · MINISTERO
+#   INDEPENDIETE · IDEPENDIENTE · INDEPNDIENTE · INDENDIENTE · INDEPENDINETE
+#
+# Enumerarlas sería una lista muerta: la 1.023ª aparece con el próximo lote. Lo
+# que se enumera es el **destino** —y ni siquiera eso a mano: las dianas salen de
+# la base de conocimiento que ya existe (tokens CIIU de peso alto y marcadores de
+# situación). El corrector es genérico; la lista de erratas no existe.
+#
+# Cuatro guardas, todas necesarias:
+#   a) Solo tokens de 8+ caracteres. Con menos, dos palabras legítimas distan un
+#      carácter (`MAR`/`MAS`, `SUR`/`SUB`) y la corrección inventa datos.
+#   b) Solo tokens que ninguna regla reconoce. Si el token ya clasifica, está bien
+#      escrito por definición y tocarlo solo puede empeorar.
+#   c) Umbral 90 y no 85. A 85 entra `DEPEDIENTE -> INDEPENDIENTE`, que invierte
+#      el sentido del registro: el dependiente es lo contrario del independiente.
+#   d) Diferencia de largo <= 2. `CONSTRUCT` y `CONSTRUCTORA` puntúan alto y no
+#      son la misma palabra.
+
+_dianas_errata: list[str] = []
+
+
+def _dianas() -> list[str]:
+    """Palabras diana, derivadas de la base de conocimiento ya declarada."""
+    global _dianas_errata
+    if not _dianas_errata:
+        _dianas_errata = sorted(
+            {t for t, r in REGLAS_CIIU.items()
+             if ' ' not in t and len(t) >= 8 and r[3] >= 7}
+            | {m for m in (MARCADORES_INACTIVO | MARCADORES_INDEPENDIENTE
+                           | MARCADORES_OCUPACION)
+               if ' ' not in m and len(m) >= 8}
+        )
+    return _dianas_errata
+
+
+_vocabulario_conocido: set[str] = set()
+
+
+def _conocido(token: str) -> bool:
+    """Un token que alguna regla ya reconoce está bien escrito por definición."""
+    global _vocabulario_conocido
+    if not _vocabulario_conocido:
+        _vocabulario_conocido = (
+            set(REGLAS_CIIU) | STOPWORDS | set(ABREVIATURAS) | set(ABREVIATURAS.values())
+            | MARCADORES_INACTIVO | MARCADORES_INDEPENDIENTE | MARCADORES_OCUPACION
+            | MARCADORES_ANOTACION | TOKENS_DIRECCION_FUERTES | TOKENS_DIRECCION_DEBILES
+            | {t for clave in GAZETTEER for t in clave.split()}
+        )
+    return token in _vocabulario_conocido
+
+
+@functools.lru_cache(maxsize=None)
+def _corregir_token(token: str) -> str:
+    if len(token) < 8 or _conocido(token):
+        return token
+    m = process.extractOne(token, _dianas(), scorer=fuzz.ratio, score_cutoff=90)
+    if not m:
+        return token
+    diana = m[0]
+    if abs(len(diana) - len(token)) > 2:
+        return token
+    # Uno es prefijo del otro: es un plural o una derivación, no una errata.
+    # `CONSULTOR` no es `CONSULTORIO` mal escrito —el consultor asesora empresas
+    # (M/70) y el consultorio atiende pacientes (Q/86)— y `COMERCIAL` no es
+    # `COMERCIALES`. Medido en seco: esta guarda sola evita 2.100 sustituciones,
+    # todas innecesarias y algunas equivocadas.
+    if diana.startswith(token) or token.startswith(diana):
+        return token
+    # Y uno contenido en el final del otro es otra palabra con un prefijo delante,
+    # no una errata. Dos casos reales que esta guarda ataja:
+    #
+    #   DEPENDIENTE  -> INDEPENDIENTE   531 registros, y son **opuestos**: el que
+    #                                   vive de otro convertido en cuenta propia.
+    #   CASTILLERO   -> ASTILLERO        42 registros. Castillero es un apellido
+    #                                   panameño corriente, no un varadero.
+    if diana.endswith(token) or token.endswith(diana):
+        return token
+    return diana
+
+
+def corregir_erratas(tokens: list[str]) -> tuple[list[str], bool]:
+    """Devuelve los tokens con las erratas corregidas, y si hubo cambio."""
+    salida = [_corregir_token(t) for t in tokens]
+    return salida, salida != tokens

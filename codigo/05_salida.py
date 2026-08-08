@@ -243,6 +243,34 @@ def main() -> None:
             ws.append(list(fila))
         ws.freeze_panes = 'A2'
         ws.auto_filter.ref = ws.dimensions
+
+        # Segunda hoja: el mismo vocabulario contado por bloque.
+        #
+        # Revisar alfabéticamente encuentra las familias, pero no dice cuánto pesa
+        # cada hallazgo. `MINISUPER` se ve una vez en el bloque de 3.000 y arrastra
+        # 300 en el de 127.000. Esta hoja pone los dos números al lado, para saber
+        # **por dónde empezar** y para ver que una corrección encontrada en el
+        # bloque chico casi siempre paga en el grande (D22).
+        vocab: dict[str, collections.Counter] = collections.defaultdict(
+            collections.Counter)
+        for a in auditoria:
+            if a[4] and a[9] in TIPOS_EMPLEADOR:
+                continue
+            b = bloque(a)
+            for t in set(a[1].split()):
+                if len(t) >= 3 and not t.isdigit() and t not in reglas.STOPWORDS:
+                    vocab[t][b] += 1
+
+        ws2 = wb.create_sheet('vocabulario')
+        ws2.append(['palabra', 'no identificable', 'situacion laboral',
+                    'empleador sin sector', 'total', 'ya tiene regla'])
+        for t, c in sorted(vocab.items(), key=lambda kv: -sum(kv[1].values())):
+            ws2.append([t, c['No identificable'], c['Situación laboral'],
+                        c['Empleador sin sector'], sum(c.values()),
+                        'si' if t in reglas.REGLAS_CIIU else ''])
+        ws2.freeze_panes = 'A2'
+        ws2.auto_filter.ref = ws2.dimensions
+
         wb.save(os.path.join(comun.DIR_SALIDAS, 'revision_pendiente.xlsx'))
         resumen_bloques = collections.Counter(f[0] for f in revision)
         comun.log('  revision_pendiente.xlsx: %d filas | %s'
