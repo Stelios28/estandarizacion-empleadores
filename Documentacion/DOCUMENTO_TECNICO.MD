@@ -8,22 +8,22 @@ Fecha: 2026-08-07 · Dataset: 323.001 registros · Panamá
 ## 1. Resumen ejecutivo
 
 Se construyó un pipeline productivo que transforma 323.001 empleadores capturados
-como texto libre en un maestro corporativo de **204.393 empleadores únicos**, con
+como texto libre en un maestro corporativo de **200.373 empleadores únicos**, con
 razón social canónica, sector CIIU Rev. 4, score de confianza y traza completa de
 cada decisión.
 
 | Resultado | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 310.684 · **96,19 %** |
-| Empleadores únicos en el maestro | 200.377 |
+| Empleadores identificados | 310.579 · **96,15 %** |
+| Empleadores únicos en el maestro | 200.373 |
 | Consolidación de variantes | **35,4 %** |
 | Con sector CIIU asignado | 185.230 · **59,6 %** de los empleadores |
 | Tiempo total de ejecución | **~2 minutos** en un portátil |
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 
 El corte del 59,6 % en cobertura sectorial no es una limitación del método: es el
-punto exacto donde la evidencia interna se agota. Los 95.922 clústeres restantes
+punto exacto donde la evidencia interna se agota. Los 89.720 clústeres restantes
 son marcas sin palabra descriptiva —`BRICKHAUS`, `SOLINTECSA`, `WILHELMSEN`— que
 requieren conocimiento externo. La fase 7 está construida y su costo medido:
 **USD 149** con Claude Opus 5, **USD 75** usando la Message Batches API.
@@ -87,19 +87,19 @@ prueba_tecnica_ing_datos.xlsx  (solo lectura, nunca se modifica)
 ┌─ BLOQUE 1 ── fases 1-4 ────────────────────────────────────────────┐
 │  Perfilamiento · Limpieza · Normalización · Tipificación           │
 │  Diccionario incremental · Matching exacto                          │
-│  323.001 registros ──▶ 247.900 claves distintas                     │
+│  323.001 registros ──▶ 242.847 claves distintas                     │
 └─────────────────────────────────────────────────────────────────────┘
         ▼
 ┌─ BLOQUE 2 ── fases 5-6 ────────────────────────────────────────────┐
 │  Bloqueo en 3 canales · Matching difuso · Clustering con cohesión   │
-│  247.900 claves ──▶ 204.393 clústeres  (7,4 M pares de 30.446 M)    │
-│  15.730 pares quedan en zona de duda ──▶ fase 7                     │
+│  242.847 claves ──▶ 200.373 clústeres  (7,4 M pares de 30.446 M)    │
+│  15.427 pares en zona de duda ──▶ propagan sector, no identidad     │
 └─────────────────────────────────────────────────────────────────────┘
         ▼
 ┌─ BLOQUE 3 ── fases 8, 9, 11 ───────────────────────────────────────┐
 │  Razón social canónica · Sector CIIU por voto ponderado             │
 │  Reproceso iterativo: el clúster propaga lo aprendido               │
-│  108.471 clústeres clasificados ·  95.922 pendientes                │
+│  110.653 clústeres clasificados ·  89.720 pendientes                │
 └─────────────────────────────────────────────────────────────────────┘
         ▼
 ┌─ BLOQUE 4 ── fase 7 ───────────────────────── (requiere credencial) ┐
@@ -130,7 +130,7 @@ token que lo generó, cosa que un coseno de TF-IDF no permite.
 
 ### 4.1 El problema es no generar el par, no subir el umbral
 
-247.900 claves distintas son **30.446 millones** de pares. La solución no es un
+242.847 claves distintas son **30.446 millones** de pares. La solución no es un
 umbral más alto: es bloqueo.
 
 ### 4.2 Tres canales de bloqueo complementarios
@@ -207,7 +207,7 @@ Se midió la separación entre pares que *son* la misma entidad y pares que no l
 
 Esto no es un umbral mal calibrado: es el límite de lo que la similitud de cadena
 puede decidir. Es exactamente lo que el enunciado llama "duda razonable". Esa banda
-—**15.730 pares**— no se resuelve adivinando: se marca y pasa a la fase 7. Debajo de
+—**15.427 pares**— no se resuelve adivinando: se marca, propaga sector sin fusionar identidades (D17) y pasa a la fase 7. Debajo de
 76 son entidades distintas y no se consulta nada.
 
 ---
@@ -262,16 +262,18 @@ Cascada determinística de la evidencia más fuerte a la más débil:
 
 | # | Fuente | Clústeres | % |
 |---|---|---:|---:|
-| 1 | Gazetteer (entidad identificada) | 2.339 | 1,1 % |
-| 2 | Propiedad horizontal (forma jurídica, no palabra clave) | 876 | 0,4 % |
-| 3 | Frase del catálogo (`SALON DE BELLEZA`, `ZONA LIBRE`) | 6.268 | 3,1 % |
-| 4 | Token con peso (`FERRETERIA` p8 > `SERVICIOS` p1) | 90.202 | 44,1 % |
-| 5 | Token aproximado (errata o singular/plural) | 8.515 | 4,2 % |
-| 6 | Reclasificación (no es un empleador) | 271 | 0,1 % |
-| — | **Sin evidencia interna → fase 7** | **95.922** | **46,9 %** |
+| 1 | Gazetteer — 185 empleadores ancla de Panamá | 3.573 | 1,8 % |
+| 2 | Propiedad horizontal (forma jurídica, no palabra clave) | 871 | 0,4 % |
+| 3 | Frase del catálogo (`SALON DE BELLEZA`, `CAJA DE SEGURO`) | 7.163 | 3,6 % |
+| 4 | Token con peso (`FERRETERIA` p8 > `SERVICIOS` p1) | 90.306 | 45,1 % |
+| 5 | Token aproximado (errata o singular/plural) | 8.029 | 4,0 % |
+| 6 | Propagación por zona de duda | 441 | 0,2 % |
+| 7 | Reclasificación (no es un empleador) | 270 | 0,1 % |
+| — | **Sin evidencia interna → fase 7** | **89.720** | **44,8 %** |
 
-Los niveles 2 y 5 se incorporaron tras la revisión de resultados (D11, D12) y aportan
-9.391 clústeres —el 4,6 % del maestro— que antes quedaban sin sector.
+Los niveles 2, 5 y 6 no estaban en el diseño original: salieron del ciclo de revisión
+(D11, D12, D17) y aportan 9.341 clústeres que antes quedaban sin sector. El nivel 1
+creció de ~60 a 185 anclas con investigación de dominio aportada por negocio (D13).
 
 ### 6.1 Voto ponderado, no primer acierto
 
@@ -318,12 +320,12 @@ confianza = 100 × factor_identidad × factor_sector − penalizaciones
 
 | Banda | Score | Registros | % | Uso operativo |
 |---|---|---:|---:|---|
-| Automático | ≥ 85 | 30.453 | 9,4 % | Utilizable sin revisión |
-| Muestreo | 70-84 | 92.007 | 28,5 % | Utilizable con control por muestra |
-| Revisión | 50-69 | 58.624 | 18,2 % | Revisar antes de usar en concentración |
-| Verificación individual | < 50 | 141.917 | 43,9 % | No usar sin verificar |
+| Automático | ≥ 85 | 37.478 | 11,6 % | Utilizable sin revisión |
+| Muestreo | 70-84 | 91.197 | 28,2 % | Utilizable con control por muestra |
+| Revisión | 50-69 | 62.559 | 19,4 % | Revisar antes de usar en concentración |
+| Verificación individual | < 50 | 131.767 | 40,8 % | No usar sin verificar |
 
-**El 43,9 % en la banda baja es, casi en su totalidad, el efecto de no tener
+**El 40,8 % en la banda baja es, casi en su totalidad, el efecto de no tener
 sector.** Ejecutar la fase 7 mueve esa masa hacia arriba: el factor sector pasa de
 0,25 a 0,50-0,90 según la confianza que declare el modelo.
 
@@ -350,7 +352,7 @@ sobre esfuerzo:
 | 2 | **Ampliar los campos a `VARCHAR(200)`** en los dos sistemas fuente. Los truncamientos a 30 y 40 caracteres son pura pérdida de información, irrecuperable. | Elimina 20.532 casos límite | Bajo |
 | 3 | **Preservar tildes y eñes** (`UTF-8` extremo a extremo). La normalización destructiva actual borra información de desambiguación. | Mejora precisión de matching | Bajo |
 | 4 | **Campos separados** para empleador, sucursal y cargo. Hoy los tres viven en una sola casilla y hay que separarlos por heurística. | Elimina una capa completa del pipeline | Medio |
-| 5 | **Validación en línea** que rechace direcciones y anotaciones operativas en el campo de empleador. | 1.868 direcciones + 899 anotaciones | Bajo |
+| 5 | **Validación en línea** que rechace direcciones y anotaciones operativas en el campo de empleador. | 1.928 direcciones + 899 anotaciones | Bajo |
 
 **Regla de gobierno:** ninguna captura nueva debe poder crear un empleador que no
 exista en el maestro sin pasar por una excepción registrada. Un dato que solo se
@@ -380,7 +382,7 @@ periódica** contra el Registro Público.
 
 **Cómo se construye, en orden:**
 
-1. Cargar el maestro generado por este pipeline como base (204.393 entidades).
+1. Cargar el maestro generado por este pipeline como base (200.373 entidades).
 2. Enriquecer la cabeza de la distribución —los 5.000 empleadores que concentran el
    grueso de la cartera— contra Registro Público y Panamá Emprende. Cubre la mayor
    parte de la exposición con esfuerzo acotado.
@@ -414,12 +416,12 @@ consultó: un dato externo sin fecha de vigencia es una suposición.
 
 | KPI | Definición | Valor hoy | Meta |
 |---|---|---:|---:|
-| Tasa de identificación | Registros con empleador identificable | 96,19 % | > 98 % |
+| Tasa de identificación | Registros con empleador identificable | 96,15 % | > 98 % |
 | Cobertura sectorial | Registros con CIIU asignado | 51,47 % | > 90 % |
-| Tasa de consolidación | 1 − (empleadores únicos / registros) | 35,4 % | Estable ±3 pp |
-| Confianza automática | Registros en banda ≥ 85 | 9,4 % | > 60 % |
+| Tasa de consolidación | 1 − (empleadores únicos / registros) | 35,5 % | Estable ±3 pp |
+| Confianza automática | Registros en banda ≥ 85 | 11,6 % | > 60 % |
 | Tasa de truncamiento | Registros en el tope del campo | 6,36 % | **0 %** |
-| Direcciones en el campo | Registros clasificados como dirección | 0,58 % | < 0,1 % |
+| Direcciones en el campo | Registros clasificados como dirección | 0,60 % | < 0,1 % |
 | Anotaciones operativas | `CLIENTE FALLECIDO`, `MENOR DEPENDIENTE` | 0,28 % | 0 % |
 | Registros vacíos o ruido | Cadenas sin significado | 0,02 % | 0 % |
 
@@ -486,7 +488,7 @@ es el tipo de riesgo que sorprende a los comités.
 | Caso | Volumen | Tratamiento |
 |---|---:|---|
 | Nombre truncado en el tope del campo | 20.532 | Regla de prefijo con distancia asimétrica; penalización en confianza si no hay variante completa |
-| Direcciones en lugar de empleador | 1.841 | `No identificable - Direcciones`. Token fuerte de vía basta; los débiles necesitan respaldo. Tres guardas evitan confundir negocio con inmueble: sufijo societario, orden de aparición y el giro «Casa de X» (D10) |
+| Direcciones en lugar de empleador | 1.928 | `No identificable - Direcciones`. Token fuerte de vía basta; los débiles necesitan respaldo. Tres guardas evitan confundir negocio con inmueble: sufijo societario, orden de aparición y el giro «Casa de X» (D10) |
 | Situación laboral, no empleador | 3.630 | `AMA DE CASA`, `JUBILADO`, `DESEMPLEADO` → categoría propia |
 | Anotaciones del sistema de originación | 899 | `CLIENTE FALLECIDO`, `MENOR DEPENDIENTE`. **No estaban previstos en el enunciado**; se descubrieron al revisar los clústeres más grandes |
 | Persona natural como empleador | 452 | Empleador válido en Panamá; se marca aparte para no contaminar el maestro corporativo como sociedad |
@@ -513,8 +515,13 @@ Tras la primera entrega completa, una revisión de resultados sobre filas concre
 | D10 | La dirección ganaba los empates contra el negocio | `Hotel Plaza Herrera S.A.` clasificado como dirección | 1.079 |
 | D11 | Fuzzy para identidades, exacto para vocabulario | `Tranporte Conrad` sin sector pese a ser evidente | 20.707 |
 | D12 | `PH` tratado como «edificio» | 1.040 propiedades horizontales mal categorizadas | 1.378 |
+| D13 | Diccionario ancla ausente; criterio propiedad vs actividad sin declarar | La Lotería y las policlínicas en la categoría discutida | 9.308 |
+| D14 | Tokens genéricos con peso de específicos | `Instituto de Recursos Hidráulicos` en Enseñanza | ~900 |
+| D15 | Gazetteer comparando subcadenas, no tokens | `Corporación Bellavista` clasificada como alquiler de autos (`AVIS`) | 252 |
+| D16 | Huecos de catálogo visibles solo en el residuo | `Primer Ciclo de Parita` sin sector | ~4.000 |
+| D17 | Zona de duda sin explotar | 15.427 pares esperando la fase 7 sin usarse | 441 |
 
-**Los cinco comparten causa: dos categorías que comparten vocabulario, y un ganador
+**D8-D11 y D14-D15 comparten causa: dos categorías que comparten vocabulario, y un ganador
 elegido implícitamente.** «Plaza» es dirección y es hotel; `PH` es edificio y es persona
 jurídica; el fuzzy servía para identidades y no para vocabulario, sin razón de diseño.
 En cada caso había una decisión tomada por el orden del código en lugar de por un criterio
@@ -535,8 +542,16 @@ Tres consecuencias que quedan incorporadas al método:
    ellos la exigió. Están registradas en `DECISIONS.MD` con el caso que las motivó, para
    que nadie las retire por parecer arbitrarias.
 
-Efecto acumulado: identificación 97,51 % → **97,96 %**; cobertura sectorial 52,8 % →
-**56,2 %**; `No identificable - Falta informacion` de 148.260 a **60** registros.
+**D12, D13 y D16 son de otra clase y de mayor rendimiento: conocimiento de dominio que no
+está en el dato.** Que `PH` sea una figura jurídica con planilla propia, que el sector lo
+decida la actividad y no la propiedad, o que `Primer Ciclo` sea un nivel del sistema
+educativo panameño, no se infieren del corpus por mucho que se lo analice. Se aportan. Es
+la justificación de que `reglas.py` esté separado del motor: integrar 125 entidades nuevas
+fue editar un diccionario, no rediseñar nada.
+
+Efecto acumulado: cobertura sectorial 52,8 % → **59,6 %**; confianza en banda automática
+10,5 % → **11,6 %**; `No identificable - Falta informacion` de 148.260 a **250** registros;
+cola de validación externa de 103.139 a **89.720** clústeres.
 
 ---
 
@@ -609,7 +624,7 @@ Lo que este pipeline **no** puede saber, y por qué:
 2. **Los nombres completos de los 20.532 registros truncados.** La información se
    perdió en el sistema de origen y no es recuperable desde este archivo.
 3. **Si el empleador está activo.** Requiere Registro Público.
-4. **El sector real de los 95.922 clústeres sin evidencia interna.** Requiere la
+4. **El sector real de los 89.720 clústeres sin evidencia interna.** Requiere la
    fase 7 o una fuente externa.
 5. **Tildes y eñes.** Destruidas aguas arriba de forma irreversible.
 

@@ -20,15 +20,15 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 | Métrica | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 310.684 · 96,19 % |
-| Empleadores únicos (maestro) | 200.377 |
-| Consolidación de variantes | 35,4 % |
+| Empleadores identificados | 310.579 · 96,15 % |
+| Empleadores únicos (maestro) | 200.373 |
+| Consolidación de variantes | 35,5 % |
 | Con sector CIIU | 185.230 · 59,64 % de los empleadores |
-| Confianza promedio / mediana | 49,8 / 53 |
+| Confianza promedio / mediana | 51,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
-Bandas: automático 30.453 (9,4 %) · muestreo 92.007 (28,5 %) · revisión 58.624 (18,2 %) ·
-verificación individual 141.917 (43,9 %).
+Bandas: automático 37.478 (11,6 %) · muestreo 91.197 (28,2 %) · revisión 62.559 (19,4 %) ·
+verificación individual 131.767 (40,8 %).
 
 ## Decisiones vigentes
 - **D1** — Pipeline completo ejecutable sobre los 323.000 registros, con los 5 entregables
@@ -68,7 +68,7 @@ verificación individual 141.917 (43,9 %).
 - **R2 Sin frecuencias** — mitigado: el canónico se elige por calidad ortográfica medida sobre el corpus
 - **R3 Truncamiento** — mitigado: 20.532 registros tratados con regla de prefijo asimétrica
 - **R7 Costo fase 7** — acotado: caché persistente, lotes de 40, presupuesto por corrida, prioridad por volumen
-- **R8 Cobertura sectorial 57,6 %** — abierto. Se cierra solo con la fase 7
+- **R8 Cobertura sectorial 59,6 %** — abierto. Se cierra solo con la fase 7
 - **R11 IPAT en agencias de viajes** — cerrado con D15: pasó a administración pública
 - **R12 Asociaciones de padres de familia** — abierto, 11 registros. Caen en Enseñanza
   porque la frase de la escuela es más larga; no se fuerza por volumen
@@ -86,7 +86,9 @@ verificación individual 141.917 (43,9 %).
 - `Documentacion/Mantenimiento/` — perfilamiento y decisiones
 
 ## Última validación
-- Pipeline completo sobre 323.001 registros — 96,19 % identificación, 200.456 empleadores únicos, 57,6 % cobertura sectorial — 2026-08-08
+- Pipeline completo sobre 323.001 registros — 96,15 % identificación, 200.373 empleadores únicos, 59,6 % cobertura sectorial — 2026-08-08
+- 18 casos de desambiguación de tokens genéricos, revisados uno a uno — 18/18 — 2026-08-08
+- Propagación por zona de duda: 441 clústeres, muestra revisada con origen y destino juntos — 2026-08-08
 - Diccionario ancla: 275 anclas activas sobre 9.308 registros — 2026-08-08
 - 25 casos de tipificación dirección/negocio, revisados uno a uno — 25/25 — 2026-08-07
 - 9 casos de propiedad horizontal (entidad vs domicilio), revisados uno a uno — 9/9 — 2026-08-07
@@ -94,17 +96,25 @@ verificación individual 141.917 (43,9 %).
 - Estimación de fase 7 contra la API real de precios — USD 149 / USD 75 por lotes — 2026-08-07
 
 ## Lección transversal del ciclo de revisión
-D8-D11 comparten causa: **dos categorías que comparten vocabulario, y un ganador elegido
-implícitamente.** Ninguna aparecía en las métricas agregadas — todas salieron de mirar
-filas concretas.
+**Familia 1 — categorías que comparten vocabulario, con un ganador elegido
+implícitamente** (D8, D10, D11, D14, D15). «Plaza» es dirección y es hotel; `PH` es
+edificio y es persona jurídica; `AVIS` está dentro de `BELLAVISTA`. Ninguna aparecía en
+las métricas agregadas: todas salieron de mirar filas concretas.
 
-D12 y D13 son de otra clase y de mayor rendimiento: **conocimiento de dominio que no está
-en el dato.** `PH` como figura jurídica y el criterio actividad-sobre-propiedad no se
-infieren del corpus por mucho que se lo analice. Se aportan. Por eso `reglas.py` está
-separado del motor, y por eso integrar 125 entidades nuevas fue editar un diccionario y no
-rediseñar nada.
+**Familia 2 — conocimiento de dominio que no está en el dato** (D12, D13, D16). Que `PH`
+sea una figura jurídica con planilla, que el sector lo decida la actividad y no la
+propiedad, o que `Primer Ciclo` sea un nivel del sistema educativo panameño, no se
+infieren del corpus. Se aportan. Es la familia de mayor rendimiento por esfuerzo, y la
+razón de que `reglas.py` esté separado del motor.
+
+**Familia 3 — evidencia disponible sin usar** (D17). Los 15.427 pares de la zona de duda
+llevaban todo el proyecto esperando la fase 7 sin aportar nada más.
 
 ## Próxima mejor acción
-Exportar `ANTHROPIC_API_KEY` y correr la fase 7 acotada a los clústeres de 2+ registros
-(~USD 7 con Haiku 4.5), luego `codigo/05_salida.py`. Antes de eso, seguir agotando reglas
-determinísticas con vocabulario aportado por negocio: es gratis y rinde más.
+**Los recursos determinísticos están agotados.** Lo que queda en la cola son nombres
+genuinamente opacos (`Tricom`, `Cbtelsa`, `Damax Marbella`): el texto no contiene la
+actividad, así que ninguna regla puede derivarla.
+
+Exportar `ANTHROPIC_API_KEY` y correr la fase 7 acotada a los 21.604 clústeres de 2+
+registros (~USD 7 con Haiku 4.5), luego `codigo/05_salida.py`. Conviene probar antes con
+`--presupuesto 20` (~USD 1, 800 nombres) para juzgar la calidad de las respuestas.

@@ -13,7 +13,7 @@ Lo que sigue convierte ese pipeline en un **activo**: algo que el banco usa todo
 los días, que se enriquece solo, y sobre lo cual se construyen otras capacidades.
 
 La diferencia importa porque el trabajo duro ya está hecho. El maestro corporativo
-de 204.393 entidades, las reglas sectoriales y el motor de resolución son el 80 % del
+de 200.373 entidades, las reglas sectoriales y el motor de resolución son el 80 % del
 esfuerzo. Lo que falta es exponerlos.
 
 ---
@@ -49,11 +49,11 @@ ensuciarse. Limpiar hacia atrás sin cerrar el grifo es trabajo recurrente.
   sectorial por un hecho.
 - **Estructura de grupos** — matriz, subsidiarias, sucursales. Los códigos de
   sucursal ya detectados (`EMPRESAS MELO 019`, `020`, `025`…) son la semilla.
-- **Cierre de la fase 7** — validación externa sobre los 95.922 clústeres
+- **Cierre de la fase 7** — validación externa sobre los 89.720 clústeres
   pendientes, con caché acumulativa.
 
-**Efecto medible:** cobertura sectorial de 56 % a > 90 %; confianza en banda
-automática de 9,4 % a > 60 %.
+**Efecto medible:** cobertura sectorial de 60 % a > 90 %; confianza en banda
+automática de 11,6 % a > 60 %.
 
 **Señal de riesgo que aparece gratis:** un cambio de razón social o una disolución
 en Registro Público es, por sí misma, información de riesgo que hoy nadie observa.
@@ -106,7 +106,7 @@ registro de baja confianza es una etiqueta. Con unos miles se puede entrenar un
 clasificador que reemplace parte de las reglas escritas a mano y que mejore solo.
 El score de confianza ya identifica exactamente qué revisar primero.
 
-**Embeddings semánticos para la zona de duda.** Los 15.730 pares que la similitud de
+**Embeddings semánticos para la zona de duda.** Los 15.427 pares que la similitud de
 cadena no resuelve son un conjunto acotado y bien delimitado. Un modelo de
 embeddings entrenado sobre razones sociales panameñas resolvería buena parte sin
 llamadas externas, y a costo marginal cero una vez entrenado.
