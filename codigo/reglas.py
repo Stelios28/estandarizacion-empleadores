@@ -313,6 +313,10 @@ MARCADORES_INDEPENDIENTE: set[str] = {
 
 # Cargos, no empleadores. Solo aplica si el registro es *únicamente* la ocupación.
 MARCADORES_OCUPACION: set[str] = {
+    'TRABAJADOR', 'TRABAJADORA', 'TRABAJADORES', 'ADMINISTRADOR',
+    'ADMINISTRADORA', 'ADMINISTRADORES', 'COORDINADOR', 'COORDINADORA',
+    'ENTRENADOR', 'EDUCADORA', 'INSTALADOR', 'PESCADOR', 'DISENADORA',
+    'ANALISTA', 'ESPECIALISTA', 'ESTILISTA', 'TAXISTA', 'EBANISTA',
     'ANALISTA', 'ASISTENTE', 'SECRETARIA', 'SECRETARIO', 'VENDEDOR', 'VENDEDORA',
     'CONDUCTOR', 'TAXISTA', 'ALBANIL', 'MECANICO', 'COCINERO', 'COCINERA',
     'GUARDIA', 'DOCENTE', 'PROFESOR', 'PROFESORA', 'MAESTRA', 'MAESTRO',
@@ -499,6 +503,52 @@ _regla('AUTOMOTRIZ|AUTOS|VEHICULOS|CONCESIONARIO|REPUESTOS|LLANTAS|'
 _regla('INSTITUTO', 'P', '85', 'Enseñanza', 3)
 _regla('SUPER', 'G', '47', 'Comercio al por menor', 3)
 _regla('GLOBAL', 'N', '82', 'Actividades de apoyo a empresas', 1)
+
+# --- Oficios de la cola larga (D17) ----------------------------------------
+# Salieron de agrupar el residuo por sufijo español de oficio: `-ERIA` (el local
+# donde se ejerce), `-ADORA` (la máquina o la empresa que hace algo).
+#
+# La regla por sufijo NO se automatizó, y con razón: entre las palabras que
+# terminan en `-ERIA` o `-ADOR` están `IBERIA`, `NIGERIA`, `ECUADOR`, `AMADOR`,
+# `SALVADOR`, `EMPERADOR` y `MIRADOR`. El sufijo sugiere dónde mirar; no decide.
+# Cada término de abajo se admitió a mano.
+
+_regla('CARNICERIA|CARNICERIAS|FRUTERIA|VERDULERIA|PESCADERIA|DULCERIA|'
+       'LECHERIA|PERFUMERIA|SEDERIA|PLATERIA|HIELERIA|BUHONERIA|LLANTERIA|'
+       'MERCERIA|CACHARRERIA|PANIFICADORA',
+       'G', '47', 'Comercio al por menor', 8)
+_regla('CEVICHERIA|HELADERIA|ROSTICERIA|CHURRERIA|LUNCHERIA|TAQUERIA|'
+       'POLLERIA|EMPANADERIA|SANGUCHERIA|CAFETERIAS',
+       'I', '56', 'Servicio de comidas y bebidas', 8)
+_regla('HOJALATERIA|CARROCERIA|CARROCERIAS|RECTIFICADORA|LLANTERA|'
+       'SILENCIADORES|RADIADORES|BATERIAS|ENDEREZADO',
+       'G', '45', 'Comercio y reparación de vehículos', 8)
+_regla('TORNERIA|TORNO|SOLDADURA|HERRERIA|FUNDICION|METALMECANICA',
+       'C', '25', 'Fabricación de productos metálicos', 8)
+_regla('MENSAJERIA|COURIER|ENCOMIENDA', 'H', '53',
+       'Actividades postales y de mensajería', 8)
+_regla('ALBANILERIA|ELEVADORES|ASCENSORES|CLIMATIZADORA|PLOMERIA|'
+       'ELECTRICIDAD|INSTALACIONES ELECTRICAS|AIRE ACONDICIONADO',
+       'F', '43', 'Actividades especializadas de construcción', 8)
+_regla('SASTRERIA|MODISTERIA|CONFECCION DE UNIFORMES',
+       'C', '14', 'Confección de prendas de vestir', 8)
+_regla('TAPICERIA|EBANISTERIA|CARPINTERIA', 'C', '31',
+       'Fabricación de muebles', 8)
+_regla('CERRAJERIA|RELOJERIA|REPARADORA', 'S', '95',
+       'Reparación de computadores y efectos personales', 8)
+_regla('FUMIGADORA|FUMIGACION|CONTROL DE PLAGAS|JARDINERIA|PAISAJISMO',
+       'N', '81', 'Servicios a edificios y paisajismo', 8)
+_regla('EMPACADORA|PILADORA|BENEFICIADORA|TRILLADORA', 'C', '10',
+       'Elaboración de productos alimenticios', 8)
+_regla('ARRENDADORA', 'N', '77', 'Alquiler y arrendamiento', 8)
+_regla('CALIFICADORA DE RIESGO|CALIFICADORA DE VALORES', 'K', '66',
+       'Actividades auxiliares financieras', 8)
+_regla('REASEGURADORA', 'K', '65', 'Seguros y fondos de pensiones', 8)
+_regla('TENERIA|CURTIDURIA', 'C', '15', 'Fabricación de cuero y calzado', 8)
+_regla('REFINERIA', 'C', '19', 'Fabricación de coque y refinación de petróleo', 8)
+_regla('ENFERMERIA|FISIOTERAPIA|OPTOMETRIA', 'Q', '86',
+       'Actividades de atención de la salud humana', 8)
+_regla('PERSONERIA|ALCALDIA MUNICIPAL', 'O', '84', 'Administración pública', 8)
 
 # --- Vocabulario derivado del conteo de frecuencias (D16) ------------------
 # Se contaron las palabras de los clústeres SIN sector, ponderadas por registros.

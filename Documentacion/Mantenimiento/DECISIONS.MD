@@ -221,6 +221,84 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D17 — Oficios de la cola larga y propagación de sector por la zona de duda
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** instrucción de agotar todo lo determinístico antes de gastar en la fase 7.
+
+### 1. Oficios de la cola larga, por sufijo español
+
+El residuo se agrupó por sufijo de oficio: `-ERIA` (el local donde se ejerce) y
+`-ADORA` (la máquina o la empresa que hace algo). 1.873 registros en 320 palabras
+distintas.
+
+**La regla por sufijo no se automatizó**, y la lista explica por qué: entre las palabras
+que terminan en `-ERIA` o `-ADOR` están `IBERIA`, `NIGERIA`, `ECUADOR`, `AMADOR`,
+`SALVADOR`, `EMPERADOR` y `MIRADOR`. **El sufijo dice dónde mirar; no decide.** Se
+admitieron a mano ~70 términos: `CARNICERIA`, `TORNERIA`, `MENSAJERIA`, `HOJALATERIA`,
+`CEVICHERIA`, `ALBANILERIA`, `SASTRERIA`, `TAPICERIA`, `CERRAJERIA`, `FUMIGADORA`,
+`EMPACADORA`, `PILADORA`, `ARRENDADORA`, `RECTIFICADORA`, `REASEGURADORA`, `TENERIA`.
+
+De paso, las palabras en `-ADOR` que son **ocupación y no empresa** —`TRABAJADOR`,
+`ADMINISTRADOR`, `COORDINADOR`, `ENTRENADOR`, `INSTALADOR`— pasaron a
+`MARCADORES_OCUPACION`, que solo dispara cuando el registro es únicamente el cargo.
+`CONTADORA` se dejó fuera: es también la isla de Contadora.
+
+### 2. Propagación de sector por la zona de duda
+
+Los 15.418 pares con similitud entre 76 y 88 estaban esperando la fase 7 sin usarse para
+nada más. **No se fusionan —eso no cambia—, pero afirmar «hacen lo mismo» es una
+afirmación mucho más débil que «son la misma empresa»**, y a esa distancia acierta casi
+siempre:
+
+```
+LABORATORIO BIOMEDICA S C      <- LABORATORIO CLINICO BIOMEDICA     85,7 %
+SECUNDARIO DE ASERRIO          <- COLEGIO SECUNDARIO DE ASERRIO     84,2 %
+PANAMA CUARTO PUENTE SOBRE EL  <- CONSORCIO CUARTO PUENTE SOBRE EL  79,1 %
+FELIPE RODRIGUEZ SA 9          <- GRUPO FELIPE RODRIGUEZ            86,0 %
+```
+
+Incluso cuando son entidades distintas —`UTP Panamá` y `UTP Penonomé`— el sector coincide.
+Por eso se propaga la actividad y no la identidad.
+
+**Dos guardas, ambas nacidas de un falso positivo medido:**
+
+| Guarda | Caso que la motivó |
+|---|---|
+| Solo se hereda de evidencia fuerte (gazetteer, frase, forma jurídica o token de peso 7-9) | `BMW Latin America` heredaba «apoyo a empresas» de un vecino clasificado por `CORPORACION`, peso 1. Propagar una inferencia débil la convierte en dos |
+| Si lo único que comparten es un nombre propio, no se hereda | `Esotérica San Miguel Arcángel` heredaba «enseñanza» de `Escuela San Miguel Arcángel`. Comparten el santo, no el oficio |
+
+Resultado: **441 clústeres**, con origen `propagacion_duda` y factor de confianza 0,58 —
+por debajo del token exacto (0,80) y del aproximado (0,62). Es evidencia plausible, no
+probada, y el score lo dice.
+
+### Un error de lectura mío, registrado
+
+Al ver la primera muestra sin las entidades de origen juzgué que la precisión era
+insuficiente y estuve a punto de descartar la técnica. Al listar **origen y destino
+juntos** quedó claro que la mayoría eran la misma entidad escrita distinto. La lección es
+sobre el método de revisión, no sobre el algoritmo: **una muestra sin su contexto de
+decisión no permite evaluar la decisión.** La vista correcta es siempre «qué se decidió,
+a partir de qué».
+
+### Un defecto de suposición
+
+La primera versión de la guarda de nombre propio leía la columna `tokens_distintivos` de
+la zona de duda como si fuera una lista de palabras. Es un **conteo**. La guarda no
+disparaba nunca y el número de propagaciones no se movía — que fue justamente la señal.
+Ahora los tokens compartidos se calculan de los dos representantes.
+
+### Efecto acumulado de la sesión
+
+| | Al empezar el día | Ahora |
+|---|---:|---:|
+| Con sector CIIU | 177.955 · 56,2 % | **185.230 · 59,6 %** |
+| Cola de fase 7 | 95.745 clústeres | **89.720** |
+| Cola de 2+ apariciones | 22.801 | **21.604** |
+
+---
+
 ## D16 — Vocabulario derivado del conteo de frecuencias sobre lo no clasificado
 
 - **Fecha:** 2026-08-08

@@ -18,11 +18,11 @@ cada decisión.
 | Empleadores identificados | 310.684 · **96,19 %** |
 | Empleadores únicos en el maestro | 200.377 |
 | Consolidación de variantes | **35,4 %** |
-| Con sector CIIU asignado | 183.043 · **58,9 %** de los empleadores |
+| Con sector CIIU asignado | 185.230 · **59,6 %** de los empleadores |
 | Tiempo total de ejecución | **~2 minutos** en un portátil |
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 
-El corte del 58,9 % en cobertura sectorial no es una limitación del método: es el
+El corte del 59,6 % en cobertura sectorial no es una limitación del método: es el
 punto exacto donde la evidencia interna se agota. Los 95.922 clústeres restantes
 son marcas sin palabra descriptiva —`BRICKHAUS`, `SOLINTECSA`, `WILHELMSEN`— que
 requieren conocimiento externo. La fase 7 está construida y su costo medido:

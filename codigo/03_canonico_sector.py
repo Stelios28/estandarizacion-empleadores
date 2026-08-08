@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import collections
 import os
+import re
 import sys
 
 from rapidfuzz import fuzz, process
@@ -84,6 +85,78 @@ def reclasificar_por_similitud(representante: str) -> tuple[str, str] | None:
     return tipo, marcador
 
 
+# Un sector solo se presta si se ganó con evidencia fuerte: entidad identificada,
+# frase del catálogo, forma jurídica, o una palabra clave de peso alto.
+_ORIGENES_FUERTES = {'gazetteer', 'frase', 'propiedad_horizontal'}
+# Nombres de persona, apellidos, santos y topónimos: aparecen en negocios de
+# cualquier rubro y por eso su coincidencia no es evidencia de actividad.
+_NOMBRES_PROPIOS = (reglas.NOMBRES_PILA | reglas.APELLIDOS | reglas.LUGARES_TOKEN
+                    | {'SAN', 'SANTA', 'SANTO', 'VIRGEN', 'ARCANGEL', 'MARIA',
+                       'JESUS', 'CRISTO', 'DIVINO', 'SAGRADO', 'NUESTRA'})
+_RX_PESO_ALTO = re.compile(r'\(peso ([789])\)')
+
+
+def _evidencia_fuerte(fila: list) -> bool:
+    return (fila[10] in _ORIGENES_FUERTES
+            or (fila[10] == 'token' and bool(_RX_PESO_ALTO.search(fila[11]))))
+
+
+def propagar_por_zona_de_duda(resueltos: list[list]) -> int:
+    """
+    Hereda el sector entre los pares que la fase 6 dejó en zona de duda (D17).
+
+    La zona de duda son pares con similitud entre 76 y 88: **demasiado parecidos
+    para descartarlos, no lo bastante para fusionarlos**. No se fusionan, y eso
+    sigue igual. Pero afirmar «hacen lo mismo» es mucho más débil que afirmar «son
+    la misma empresa», y a esa distancia acierta casi siempre:
+
+        ALEMAN CORDERO GALINDO Y LEE  /  ALCOGAL CORDERO GALINDO LEE
+        ESCUELA UN PASO HACIA EL FUTURO  /  UN PASO HACIA EL FUTURO
+        ARTHUR J GALLAGHER PANAMA  /  ARTHUR J GALLAGHER PMA
+
+    Incluso cuando son entidades distintas —`UTP Panamá` y `UTP Penonomé`— el
+    sector es el mismo. Por eso se propaga la actividad y no la identidad.
+
+    Devuelve cuántos clústeres heredaron sector. Modifica `resueltos` en sitio.
+    """
+    ruta = comun.ruta_trabajo('02_zona_duda.csv.gz')
+    if not os.path.exists(ruta):
+        return 0
+
+    # índice por representante: columnas 3=representante, 6=sección, 7=división
+    por_rep = {fila[3]: fila for fila in resueltos}
+    propagados = 0
+    for par in comun.leer_csv(ruta):
+        a = por_rep.get(par['representante_a'])
+        b = por_rep.get(par['representante_b'])
+        if not a or not b:
+            continue
+        fuente, destino = (a, b) if a[6] and not b[6] else (b, a) if b[6] and not a[6] else (None, None)
+        if fuente is None or destino[10] == 'reclasificacion':
+            continue
+        # Solo se hereda de evidencia fuerte. Sin esta guarda, `BMW Latin America`
+        # heredaba «apoyo a empresas» de un vecino clasificado por `CORPORACION`
+        # (peso 1). Propagar una inferencia débil la convierte en dos.
+        if not _evidencia_fuerte(fuente):
+            continue
+        # Si lo único que comparten es un nombre propio, el parecido no dice nada
+        # de la actividad: `CYBER SAN MIGUEL ARCANGEL` heredaba «salud» de
+        # `COLEGIO SAN MIGUEL ARCANGEL` porque ambos llevan el nombre del santo.
+        comunes = ((set(fuente[3].split()) & set(destino[3].split()))
+                   - reglas.STOPWORDS)
+        if comunes and comunes <= _NOMBRES_PROPIOS:
+            continue
+        destino[6], destino[7] = fuente[6], fuente[7]
+        destino[8] = sector.etiqueta(fuente[6], fuente[7])
+        destino[9] = sector.vista_ejecutiva(fuente[6])
+        destino[10] = 'propagacion_duda'
+        destino[11] = ('hereda el sector de "%s", con quien comparte %s%% de similitud'
+                       % (fuente[3][:40], par['cohesion']))
+        destino[12] = 0
+        propagados += 1
+    return propagados
+
+
 def main() -> None:
     with comun.Fase('cargar registros y clústeres'):
         asignacion = comun.leer_json(comun.ruta_trabajo('02_clusters.json'))
@@ -142,6 +215,11 @@ def main() -> None:
 
         comun.log('  clústeres resueltos: %d | reclasificados en fase 11: %d'
                   % (len(resueltos), reclasificados))
+
+    with comun.Fase('fase 11b: propagar sector por la zona de duda'):
+        propagados = propagar_por_zona_de_duda(resueltos)
+        comun.log('  clústeres que heredaron sector de un vecino dudoso: %d'
+                  % propagados)
 
     with comun.Fase('escribir intermedios'):
         comun.escribir_csv(comun.ruta_trabajo('03_clusters_resueltos.csv.gz'),

@@ -39,6 +39,7 @@ FACTOR_SECTOR = {
     'propiedad_horizontal': 0.94,  # forma jurídica, no palabra clave: la actividad se deduce de ella
     'frase': 0.92,                 # frase completa del catálogo: el contexto desambigua
     'token': 0.80,                 # una palabra clave; se ajusta por peso más abajo
+    'propagacion_duda': 0.58,       # hereda de un vecino 76-88% similar: plausible, no probado
     'token_aproximado': 0.62,      # errata o variante morfológica: evidencia real, más débil
     'llm_alta': 0.90,
     'llm_media': 0.72,
