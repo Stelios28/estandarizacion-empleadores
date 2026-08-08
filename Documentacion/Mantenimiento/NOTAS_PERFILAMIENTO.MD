@@ -201,7 +201,7 @@ segmentación sectorial que ya usa Riesgo.
 | R2 | Sin frecuencias, elegir el canónico es ambiguo | Canónico por regla (nombre más largo no truncado + validación externa), no por moda |
 | R3 | Truncados tratados como errores tipográficos | Regla de prefijo con distancia asimétrica |
 | R4 | Ocupaciones e inactivos contaminan el maestro corporativo | Categoría propia, decisión documentada (el enunciado no la contempla) |
-| R5 | Persona natural como empleador (`BENIGNO VARGAS MENDIETA`) | Detector de antropónimo; no ingresa al maestro corporativo como sociedad |
+| R5 | Persona natural como empleador (`NOMBRE APELLIDO APELLIDO`, anonimizado) | Detector de antropónimo; no ingresa al maestro corporativo como sociedad |
 | R6 | Remoción del sufijo numérico borra dígitos legítimos (`3N SA`, `JOSUE 8`) | Lista de excepciones + registro de cada remoción en la traza |
 | R7 | Búsqueda web sobre 305.676 variantes es inviable en costo | Consultar solo el representante del clúster y solo bajo duda razonable; caché persistente |
 
