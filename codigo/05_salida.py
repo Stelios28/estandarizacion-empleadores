@@ -30,6 +30,12 @@ import sector as sector_mod
 
 TIPOS_EMPLEADOR = {'EMPRESA', 'PERSONA_NATURAL'}
 
+# Tipos que no son un empleador corporativo pero cuyo texto sí puede nombrar la
+# actividad de la que vive la persona: el oficio del independiente, el empleador
+# del que se jubiló, la universidad donde estudia. Conservan el sector aunque el
+# nombre propuesto sea la etiqueta genérica del tipo.
+SECTOR_RECUPERABLE = {'INDEPENDIENTE', 'INACTIVO'}
+
 ETIQUETA_POR_TIPO = {
     'DIRECCION': (reglas.SECTOR_DIRECCION, reglas.SECTOR_DIRECCION),
     'VACIO': (reglas.SECTOR_FALTA_INFO, reglas.SECTOR_FALTA_INFO),
@@ -82,10 +88,12 @@ def main() -> None:
                 score = CONFIANZA_TIPO[tipo]
                 seccion = division = ''
                 vista = 'No aplica'
-                # Un independiente se agrupa como independiente, pero si declaró su
-                # oficio —`INDEPENDIENTE AGRIMENSURA`— la actividad es un dato útil
-                # y gratuito: se conserva el sector aunque el nombre sea genérico.
-                if tipo == 'INDEPENDIENTE' and fila['nucleo']:
+                # El tipo dice que no hay vínculo laboral corporativo vigente; no dice
+                # que no haya información. `INDEPENDIENTE AGRIMENSURA` declara su
+                # oficio y `PANAMA CANAL COMMISSION JUBILADO` declara de dónde viene
+                # su pensión. Ambos son la actividad económica de la que vive esa
+                # persona, que es la columna que Riesgo necesita (D18, D19).
+                if tipo in SECTOR_RECUPERABLE and fila['nucleo']:
                     s_, d_, origen_, _ = sector_mod.clasificar(
                         fila['nucleo'], fila['nucleo'].split())
                     if s_:

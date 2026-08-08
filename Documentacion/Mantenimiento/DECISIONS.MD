@@ -221,6 +221,76 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D19 — El jubilado nombra a su empleador, y el estudiante a su universidad
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** segundo tramo alfabético revisado por Javier. La letra A bastó para
+  encontrar dos familias más.
+
+### La generalización de D18
+
+D18 recuperó el sector del trabajador independiente a partir de su oficio. La revisión
+mostró que el mismo razonamiento aplica a los inactivos, y que estaba sin aplicar:
+
+```
+PANAMA CANAL COMMISSION JUBILADO        -> sin sector
+JUBILADO DE LA CAJA DEL SEGURO SOCIAL   -> sin sector
+ALMACEN WONG CHANG JUBILADO             -> sin sector
+ESTUDIANTE DE UNIVERSIDAD INTERAMERICANA-> sin sector
+REFRESCOS NACIONALES SA YA NO LABORA    -> sin sector
+```
+
+**El tipo dice que no hay vínculo laboral corporativo vigente. No dice que no haya
+información.** El texto nombra al empleador del que la persona se jubiló, o la
+universidad donde estudia: es la actividad económica de la que vive, que es exactamente
+la columna que Riesgo necesita.
+
+El tipo no cambia —siguen siendo `INACTIVO`, no entran al maestro corporativo— pero
+conservan el sector. Se generalizó con un conjunto `SECTOR_RECUPERABLE = {INDEPENDIENTE,
+INACTIVO}` en lugar de un caso especial, para que la próxima familia no requiera tocar el
+motor.
+
+**1.377 registros inactivos** recuperaron sector, además de los 3.610 independientes.
+
+### Tercer marcador demasiado corto
+
+`ESTUDIANTE` estaba como marcador suelto de inactividad, igual que `HOGAR` en D18:
+
+```
+ALMACEN EL ESTUDIANTE      -> era «no es un empleador»,  es una tienda
+LIBRERIA EL ESTUDIANTE     -> era «no es un empleador»,  es una librería
+```
+
+Se aplicó la **regla de orden de D10**: si un término de actividad de peso alto precede al
+marcador, manda el negocio. `ALMACEN EL ESTUDIANTE` → comercio; `ESTUDIANTE DE
+UNIVERSIDAD` → inactivo.
+
+`ESTUDIANTE` fue el único marcador suelto que lo necesitaba: los demás —`JUBILADO`,
+`PENSIONADO`, `DESEMPLEADO`, `CESANTE`— no aparecen en nombres de negocio, y de hecho
+`ALMACEN WONG CHANG JUBILADO` **debe** seguir siendo inactivo: es un jubilado de ese
+almacén, no el almacén.
+
+### Efecto medido
+
+| | Antes | Ahora |
+|---|---:|---:|
+| Con sector CIIU | 186.907 · 60,12 % | **188.300 · 60,56 %** |
+| Cobertura sobre el total de registros | 57,86 % | **58,30 %** |
+| Inactivos con sector recuperado | 0 | 1.377 |
+
+### El método que encontró esto
+
+Dos tramos alfabéticos, solo la letra A, produjeron D18 y D19: **~4.500 registros**.
+El conteo por volumen, que ya está exprimido, no habría encontrado ninguno de los dos —
+son familias de baja frecuencia individual y alta frecuencia agregada.
+
+**Ordenar por volumen muestra los errores caros. Ordenar alfabéticamente muestra las
+familias.** Las dos vistas encuentran cosas distintas y el ciclo de mantenimiento debería
+incluir ambas.
+
+---
+
 ## D18 — El oficio del trabajador independiente es un sector
 
 - **Fecha:** 2026-08-08

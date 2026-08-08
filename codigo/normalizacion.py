@@ -203,7 +203,16 @@ def clasificar_tipo(texto: str, tokens: list[str],
 
     # 3. Situación laboral, no empleador
     marca = _frase_en(texto, reglas.MARCADORES_INACTIVO)
-    if marca or conjunto & reglas.MARCADORES_INACTIVO:
+    suelto = conjunto & reglas.MARCADORES_INACTIVO
+    # `ESTUDIANTE` es el único marcador suelto que aparece como nombre de negocio
+    # (`ALMACEN EL ESTUDIANTE`, `LIBRERIA EL ESTUDIANTE`). Si un término de actividad
+    # lo precede, manda el negocio — la misma regla de orden de D10.
+    if suelto == {'ESTUDIANTE'} and not marca:
+        pos_est = tokens.index('ESTUDIANTE')
+        if any(reglas.REGLAS_CIIU.get(t, ('', '', '', 0))[3] >= 7
+               for t in tokens[:pos_est]):
+            suelto = set()
+    if marca or suelto:
         return 'INACTIVO', 'situación laboral declarada: %s' % (marca or 'token')
 
     # 4. Trabajador por cuenta propia
