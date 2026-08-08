@@ -284,7 +284,18 @@ def quitar_calificadores(tokens: list[str]) -> tuple[list[str], list[str]]:
 MARCADORES_INACTIVO: set[str] = {
     'JUBILADO', 'JUBILADA', 'PENSIONADO', 'PENSIONADA', 'RETIRADO', 'RETIRADA',
     'DESEMPLEADO', 'DESEMPLEADA', 'AMA DE CASA', 'AMO DE CASA', 'ESTUDIANTE',
-    'NO TRABAJA', 'SIN TRABAJO', 'SIN EMPLEO', 'CESANTE', 'HOGAR',
+    'NO TRABAJA', 'SIN TRABAJO', 'SIN EMPLEO', 'CESANTE',
+    # `HOGAR` a secas estaba aquí y sacaba empresas del maestro: `ALMACEN PUNTO EL
+    # HOGAR` y `FINANZAS Y CREDITOS DEL HOGAR` quedaban como situación laboral
+    # inactiva. El marcador tiene que ser la frase, no la palabra (D18).
+    'AMA DE CASA', 'AMO DE CASA', 'AMA DE LLAVES',
+    'ADMINISTRADORA DEL HOGAR', 'ADMINISTRADOR DEL HOGAR',
+    'ADMINISTRADORA DE SU HOGAR', 'ADMINISTRADORA EL HOGAR',
+    'ADMON DEL HOGAR', 'ADMO DEL HOGAR', 'ADMINISTRADORA DOMESTICA',
+    'LABORES DEL HOGAR', 'OFICIOS DEL HOGAR', 'TAREAS DEL HOGAR',
+    # Formas de «no está trabajando» que el corpus escribe con adverbio delante.
+    'NO LABORA', 'NO ESTA LABORANDO', 'NO ESTA TRABAJANDO',
+    'QUEDO CESANTE', 'ACABA DE QUEDAR CESANTE', 'SIN EMPLEO ACTUAL',
 }
 
 # Anotaciones operativas del sistema de originación que quedaron en el campo de
@@ -503,6 +514,54 @@ _regla('AUTOMOTRIZ|AUTOS|VEHICULOS|CONCESIONARIO|REPUESTOS|LLANTAS|'
 _regla('INSTITUTO', 'P', '85', 'Enseñanza', 3)
 _regla('SUPER', 'G', '47', 'Comercio al por menor', 3)
 _regla('GLOBAL', 'N', '82', 'Actividades de apoyo a empresas', 1)
+
+# --- Oficio del trabajador independiente (D18) -----------------------------
+# `ABOGADA INDEPENDIENTE`, `ACUICULTOR INDEPENDIENTE`, `INDEPENDIENTE AGRIMENSURA`.
+# El registro no nombra una empresa —no la hay— pero **sí dice a qué se dedica la
+# persona**, que es justo la columna que Riesgo necesita. El tipo sigue siendo
+# INDEPENDIENTE; lo que se recupera es el sector.
+#
+# Solo entran oficios de actividad inequívoca. Se dejaron fuera `ADMINISTRADOR`,
+# `OPERADOR`, `AYUDANTE`, `PROFESIONAL`, `CORREDOR` y `EMPRESARIO`: son cargos que
+# existen en cualquier rama y no dicen en cuál.
+
+_regla('VENDEDOR|VENDEDORA|VENDEDORES|COMERCIANTE|BUHONERO|MERCANCIA|'
+       'MERCANCIAS|REVENDEDOR', 'G', '47', 'Comercio al por menor', 7)
+_regla('AGRICULTOR|AGRICULTORA|GANADERO|GANADERA|CAMPESINO|AVICULTOR|'
+       'APICULTOR|SEMBRADOR|FINQUERO',
+       'A', '01', 'Agricultura, ganadería, caza', 8)
+_regla('PESCADOR|ACUICULTOR|MARISCADOR', 'A', '03', 'Pesca y acuicultura', 8)
+_regla('CONDUCTOR|CONDUCTORA|CHOFER|CHOFERES|TAXISTA|CAMIONERO|MOTORISTA|'
+       'BUSERO|SELECTIVERO', 'H', '49', 'Transporte terrestre', 8)
+_regla('MECANICO|MECANICA AUTOMOTRIZ|LATONERO', 'G', '45',
+       'Comercio y reparación de vehículos', 8)
+_regla('SOLDADOR|TORNERO|HERRERO', 'C', '25',
+       'Fabricación de productos metálicos', 8)
+_regla('ALBANIL|ALBANILES|PLOMERO|ELECTRICISTA|PINTOR|CONTRATISTA|'
+       'CARPINTERO|TECHERO', 'F', '43',
+       'Actividades especializadas de construcción', 8)
+_regla('PROFESOR|PROFESORA|MAESTRO|MAESTRA|DOCENTE|INSTRUCTOR|INSTRUCTORA|'
+       'TUTOR|EDUCADOR', 'P', '85', 'Enseñanza', 8)
+_regla('ABOGADO|ABOGADA|ABOGADOS|NOTARIO|CONTADOR PUBLICO|AUDITOR',
+       'M', '69', 'Actividades jurídicas y de contabilidad', 8)
+_regla('PROGRAMADOR|PROGRAMADORA|DESARROLLADOR|INFORMATICO|WEBMASTER',
+       'J', '62', 'Programación informática y consultoría', 8)
+_regla('DISENADOR|DISENADORA|DECORADOR|DECORADORA|FOTOGRAFO|FOTOGRAFA|'
+       'PUBLICISTA', 'M', '74', 'Otras actividades profesionales', 7)
+_regla('MODISTA|COSTURERA|SASTRE', 'C', '14',
+       'Confección de prendas de vestir', 8)
+_regla('ESTILISTA|BARBERO|PELUQUERO|PELUQUERA|MANICURISTA|COSMETOLOGA|'
+       'MASAJISTA', 'S', '96', 'Otros servicios personales', 8)
+_regla('ENFERMERO|ENFERMERA|ODONTOLOGO|ODONTOLOGA|FISIOTERAPEUTA|'
+       'ACUPUNTURISTA|NUTRICIONISTA|PSICOLOGO|PSICOLOGA|VETERINARIO',
+       'Q', '86', 'Actividades de atención de la salud humana', 8)
+_regla('AGRIMENSOR|AGRIMENSURA|TOPOGRAFO|ARQUITECTO|ARQUITECTA|'
+       'INGENIERO|INGENIERA', 'M', '71', 'Arquitectura e ingeniería', 8)
+_regla('EMPLEADA DOMESTICA|EMPLEADO DOMESTICO|TRABAJADORA DOMESTICA|'
+       'SERVICIO DOMESTICO|NINERA', 'T', '97', 'Hogares como empleadores', 8)
+_regla('COCINERO|COCINERA|REPOSTERO|REPOSTERA|PANADERO|CHEF|'
+       'VENTA DE COMIDA|COMIDA RAPIDA', 'I', '56',
+       'Servicio de comidas y bebidas', 8)
 
 # --- Oficios de la cola larga (D17) ----------------------------------------
 # Salieron de agrupar el residuo por sufijo español de oficio: `-ERIA` (el local

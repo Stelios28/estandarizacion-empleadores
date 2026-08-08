@@ -15,14 +15,14 @@ cada decisión.
 | Resultado | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 310.579 · **96,15 %** |
-| Empleadores únicos en el maestro | 200.373 |
+| Empleadores identificados | 310.894 · **96,25 %** |
+| Empleadores únicos en el maestro | 200.601 |
 | Consolidación de variantes | **35,4 %** |
-| Con sector CIIU asignado | 185.230 · **59,6 %** de los empleadores |
+| Con sector CIIU asignado | 186.907 · **60,1 %** de los empleadores |
 | Tiempo total de ejecución | **~2 minutos** en un portátil |
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 
-El corte del 59,6 % en cobertura sectorial no es una limitación del método: es el
+El corte del 60,1 % en cobertura sectorial no es una limitación del método: es el
 punto exacto donde la evidencia interna se agota. Los 89.720 clústeres restantes
 son marcas sin palabra descriptiva —`BRICKHAUS`, `SOLINTECSA`, `WILHELMSEN`— que
 requieren conocimiento externo. La fase 7 está construida y su costo medido:
@@ -416,7 +416,7 @@ consultó: un dato externo sin fecha de vigencia es una suposición.
 
 | KPI | Definición | Valor hoy | Meta |
 |---|---|---:|---:|
-| Tasa de identificación | Registros con empleador identificable | 96,15 % | > 98 % |
+| Tasa de identificación | Registros con empleador identificable | 96,25 % | > 98 % |
 | Cobertura sectorial | Registros con CIIU asignado | 51,47 % | > 90 % |
 | Tasa de consolidación | 1 − (empleadores únicos / registros) | 35,5 % | Estable ±3 pp |
 | Confianza automática | Registros en banda ≥ 85 | 11,6 % | > 60 % |
@@ -520,6 +520,7 @@ Tras la primera entrega completa, una revisión de resultados sobre filas concre
 | D15 | Gazetteer comparando subcadenas, no tokens | `Corporación Bellavista` clasificada como alquiler de autos (`AVIS`) | 252 |
 | D16 | Huecos de catálogo visibles solo en el residuo | `Primer Ciclo de Parita` sin sector | ~4.000 |
 | D17 | Zona de duda sin explotar | 15.427 pares esperando la fase 7 sin usarse | 441 |
+| D18 | «Sin empleador corporativo» tratado como «sin información» | `Abogada independiente` sin sector | 1.677 |
 
 **D8-D11 y D14-D15 comparten causa: dos categorías que comparten vocabulario, y un ganador
 elegido implícitamente.** «Plaza» es dirección y es hotel; `PH` es edificio y es persona
@@ -549,9 +550,9 @@ educativo panameño, no se infieren del corpus por mucho que se lo analice. Se a
 la justificación de que `reglas.py` esté separado del motor: integrar 125 entidades nuevas
 fue editar un diccionario, no rediseñar nada.
 
-Efecto acumulado: cobertura sectorial 52,8 % → **59,6 %**; confianza en banda automática
-10,5 % → **11,6 %**; `No identificable - Falta informacion` de 148.260 a **250** registros;
-cola de validación externa de 103.139 a **89.720** clústeres.
+Efecto acumulado: cobertura sectorial 52,8 % → **60,1 %**; confianza en banda automática
+10,5 % → **11,5 %**; `No identificable - Falta informacion` de 148.260 a **250** registros;
+cola de validación externa de 103.139 a **89.149** clústeres.
 
 ---
 

@@ -221,6 +221,72 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D18 — El oficio del trabajador independiente es un sector
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** Javier revisó la lista alfabética de lo no identificable y señaló que ahí
+  había cosas identificables: `ABOGADA INDEPENDIENTE`, `ACUICULTOR INDEPENDIENTE`,
+  `ACUPUNTURISTA INDEPENDIENTE`.
+
+### El razonamiento que faltaba
+
+Un registro como `ABOGADA INDEPENDIENTE` **no nombra ninguna empresa, y nunca la nombrará**
+—no hay empresa que nombrar—. Pero sí dice a qué se dedica la persona, y esa es
+exactamente la columna que Riesgo necesita para analizar concentración.
+
+Estábamos tratando «no hay empleador corporativo» como si fuera «no hay información». Son
+cosas distintas. El tipo sigue siendo `INDEPENDIENTE`; lo que se recupera es el sector.
+
+Se admitieron 17 familias de oficios inequívocos: `VENDEDOR`, `AGRICULTOR`, `GANADERO`,
+`PESCADOR`, `ACUICULTOR`, `CONDUCTOR`, `TAXISTA`, `MECANICO`, `SOLDADOR`, `ALBANIL`,
+`PLOMERO`, `ELECTRICISTA`, `PROFESOR`, `ABOGADO`, `PROGRAMADOR`, `DISENADOR`, `MODISTA`,
+`ESTILISTA`, `ENFERMERO`, `ODONTOLOGO`, `ACUPUNTURISTA`, `AGRIMENSOR`, `ARQUITECTO`,
+`COCINERO`, `EMPLEADA DOMESTICA`.
+
+**Quedaron fuera a propósito:** `ADMINISTRADOR`, `OPERADOR`, `AYUDANTE`, `PROFESIONAL`,
+`CORREDOR`, `EMPRESARIO`. Son cargos que existen en cualquier rama y no dicen en cuál.
+
+Nota: `EMPLEADA DOMESTICA` estrena la sección **T — Hogares como empleadores**, que hasta
+ahora no se usaba y es la clasificación correcta en CIIU para el trabajo doméstico
+remunerado.
+
+### Un defecto encontrado en la misma revisión
+
+`HOGAR` estaba como marcador suelto de situación laboral inactiva, para capturar «ama de
+casa». Sacaba empresas del maestro:
+
+```
+ALMACEN PUNTO EL HOGAR          -> era «no es un empleador»,  es un almacén
+FINANZAS Y CREDITOS DEL HOGAR   -> era «no es un empleador»,  es una financiera
+PATRONATO DEL HOGAR LEONISTICO  -> era «no es un empleador»,  es un asilo
+```
+
+**Un marcador tiene que ser tan específico como el concepto que marca.** «Ama de casa» es
+una frase; `HOGAR` es una palabra que aparece en el nombre de cualquier negocio dirigido al
+hogar. Se reemplazó por las 13 frases reales del corpus: `AMA DE CASA`,
+`ADMINISTRADORA DEL HOGAR`, `ADMON DEL HOGAR`, `ADMO DEL HOGAR`, `LABORES DEL HOGAR`…
+
+De paso se añadieron las formas de «no está trabajando» que el corpus escribe con adverbio
+delante y que no casaban: `ACTUALMENTE NO LABORA`, `NO ESTA LABORANDO`, `QUEDO CESANTE`.
+
+### Efecto medido
+
+| | Antes | Ahora |
+|---|---:|---:|
+| Con sector CIIU | 185.230 · 59,64 % | **186.907 · 60,12 %** |
+| Identificación | 96,15 % | **96,25 %** |
+| Cola de fase 7 | 89.720 clústeres | **89.149** |
+| Marcados como inactivos | 3.632 | 3.333 (299 empresas rescatadas) |
+
+**Lección:** la revisión que encontró esto fue leer la lista **en orden alfabético**, no
+por volumen. Ordenar por volumen muestra los errores caros; ordenar alfabéticamente muestra
+las **familias** de registros —todos los `ABOGAD*` juntos, todos los `ADMINISTRADOR*`
+juntos— y ahí se ve el patrón que el volumen esconde. Las dos vistas encuentran cosas
+distintas y conviene usar ambas.
+
+---
+
 ## D17 — Oficios de la cola larga y propagación de sector por la zona de duda
 
 - **Fecha:** 2026-08-08

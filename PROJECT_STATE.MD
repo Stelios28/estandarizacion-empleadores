@@ -7,7 +7,7 @@ con score de confianza y explicación por registro.
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo diez correcciones (D8-D17). Solo queda la fase 7 (validación externa), que está
+produjo once correcciones (D8-D18). Solo queda la fase 7 (validación externa), que está
 construida y probada en su ruta de estimación pero no ejecutada: requiere credencial.
 
 ## Misión activa
@@ -20,15 +20,15 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 | Métrica | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 310.579 · 96,15 % |
-| Empleadores únicos (maestro) | 200.373 |
+| Empleadores identificados | 310.894 · 96,25 % |
+| Empleadores únicos (maestro) | 200.601 |
 | Consolidación de variantes | 35,5 % |
-| Con sector CIIU | 185.230 · 59,64 % de los empleadores |
+| Con sector CIIU | 186.907 · 60,12 % de los empleadores |
 | Confianza promedio / mediana | 51,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
-Bandas: automático 37.478 (11,6 %) · muestreo 91.197 (28,2 %) · revisión 62.559 (19,4 %) ·
-verificación individual 131.767 (40,8 %).
+Bandas: automático 37.234 (11,5 %) · muestreo 92.343 (28,6 %) · revisión 62.464 (19,3 %) ·
+verificación individual 130.960 (40,5 %).
 
 ## Decisiones vigentes
 - **D1** — Pipeline completo ejecutable sobre los 323.000 registros, con los 5 entregables
@@ -52,6 +52,8 @@ verificación individual 131.767 (40,8 %).
 - **D16** — Vocabulario derivado del conteo de frecuencias sobre el residuo sin sector
 - **D17** — Oficios de la cola larga por sufijo español (curados a mano) y propagación
   de sector por la zona de duda, con guardas de evidencia fuerte y de nombre propio
+- **D18** — El oficio del trabajador independiente es un sector; `HOGAR` deja de ser
+  marcador suelto de inactividad
 
 ## Pendientes prioritarios
 - **Alta** — Decidido por negocio: los clústeres de una sola aparición no aportan al
@@ -68,7 +70,7 @@ verificación individual 131.767 (40,8 %).
 - **R2 Sin frecuencias** — mitigado: el canónico se elige por calidad ortográfica medida sobre el corpus
 - **R3 Truncamiento** — mitigado: 20.532 registros tratados con regla de prefijo asimétrica
 - **R7 Costo fase 7** — acotado: caché persistente, lotes de 40, presupuesto por corrida, prioridad por volumen
-- **R8 Cobertura sectorial 59,6 %** — abierto. Se cierra solo con la fase 7
+- **R8 Cobertura sectorial 60,1 %** — abierto. Se cierra solo con la fase 7
 - **R11 IPAT en agencias de viajes** — cerrado con D15: pasó a administración pública
 - **R12 Asociaciones de padres de familia** — abierto, 11 registros. Caen en Enseñanza
   porque la frase de la escuela es más larga; no se fuerza por volumen

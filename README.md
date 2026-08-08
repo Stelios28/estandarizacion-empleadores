@@ -13,10 +13,10 @@ Prueba técnica de Ingeniería de Datos · Panamá · 2026
 | Métrica | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 310.579 · **96,15 %** |
-| Empleadores únicos en el maestro | **200.373** |
+| Empleadores identificados | 310.894 · **96,25 %** |
+| Empleadores únicos en el maestro | **200.601** |
 | Consolidación de variantes | 35,5 % |
-| Con sector CIIU asignado | 185.230 · **59,6 %** de los empleadores |
+| Con sector CIIU asignado | 186.907 · **60,1 %** de los empleadores |
 | Pares evaluados | 7,4 M de 30.446 M · **0,024 %** |
 | Tiempo de corrida completa | ~2 minutos |
 
@@ -51,9 +51,9 @@ export ANTHROPIC_API_KEY=...
 .venv/Scripts/python codigo/05_salida.py                           # regenera entregables
 ```
 
-Resuelve los 89.720 clústeres cuyo nombre no revela la actividad (`Tricom`, `Cbtelsa`).
+Resuelve los 89.149 clústeres cuyo nombre no revela la actividad (`Tricom`, `Cbtelsa`).
 Costo medido: ~USD 140 con Opus 5, ~USD 28 con Haiku 4.5, la mitad con la Message Batches
-API. Acotado a los 21.604 clústeres que aparecen 2 o más veces —los únicos que pesan en un
+API. Acotado a los 21.492 clústeres que aparecen 2 o más veces —los únicos que pesan en un
 análisis de concentración— baja a ~USD 7.
 
 ---
@@ -80,7 +80,7 @@ Documentacion/
   DOCUMENTO_TECNICO.MD    12 secciones, con las 5 preguntas estratégicas
   PROPUESTA_EVOLUCION.MD  De pipeline a activo corporativo
   Mantenimiento/
-    DECISIONS.MD          D1-D17: cada decisión con su motivo y su evidencia
+    DECISIONS.MD          D1-D18: cada decisión con su motivo y su evidencia
     NOTAS_PERFILAMIENTO.MD  Hallazgos del perfilamiento, con cifras
 
 PROJECT_STATE.MD          Estado vivo del proyecto
