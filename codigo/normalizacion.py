@@ -165,6 +165,11 @@ def _frase_en(texto: str, frases: set[str]) -> str | None:
 
 _ARTICULOS_TRAS_CASA = {'DE', 'DEL', 'EL', 'LA', 'LOS', 'LAS'}
 
+# Giros que se escriben pegados a `CASA`, sin artículo en medio. `CASA CURAL` es la
+# casa del párroco —un empleador con sacristán y secretaria— y quedaba como
+# dirección porque `CASA` sola cuenta como indicio de inmueble (D23).
+_GIROS_TRAS_CASA = {'CURAL', 'MATRIZ', 'CENTRAL', 'FUNERARIA', 'COMERCIAL'}
+
 
 def _casa_de_giro(tokens: list[str]) -> set[str]:
     """
@@ -175,7 +180,9 @@ def _casa_de_giro(tokens: list[str]) -> set[str]:
     artículo. Neutraliza el token para que no cuente como indicio de inmueble.
     """
     for i, t in enumerate(tokens):
-        if t == 'CASA' and i + 1 < len(tokens) and tokens[i + 1] in _ARTICULOS_TRAS_CASA:
+        if t == 'CASA' and i + 1 < len(tokens) and (
+                tokens[i + 1] in _ARTICULOS_TRAS_CASA
+                or tokens[i + 1] in _GIROS_TRAS_CASA):
             return {'CASA'}
     return set()
 

@@ -7,7 +7,7 @@ con score de confianza y explicación por registro.
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo quince correcciones (D8-D22). Solo queda la fase 7 (validación externa), que está
+produjo dieciseis correcciones (D8-D23). Solo queda la fase 7 (validación externa), que está
 construida y probada en su ruta de estimación pero no ejecutada: requiere credencial.
 
 ## Misión activa
@@ -20,10 +20,10 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 | Métrica | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 309.251 · 95,74 % |
+| Empleadores identificados | 309.476 · 95,81 % |
 | Empleadores únicos (maestro) | 200.650 |
 | Consolidación de variantes | 35,5 % |
-| Con sector CIIU | 189.454 · 61,26 % de los empleadores |
+| Con sector CIIU | 190.303 · 61,49 % de los empleadores |
 | Confianza promedio / mediana | 51,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
@@ -62,6 +62,8 @@ verificación individual 130.960 (40,5 %).
   para las anotaciones del sistema; regresión de `SUPER` causada por D14
 - **D22** — Lo hallado en el bloque chico paga en el grande: corrector de erratas
   derivado del corpus (3.298 registros), sección T de la CIIU, anotaciones por prefijo
+- **D23** — Muestreo aleatorio como tercera vista: `M S` = Mini Super (463),
+  `FINCA` deja de ser dirección (212), `PLANILLA` es nómina y no empleador (62)
 
 ## Pendientes prioritarios
 - **Alta** — Decidido por negocio: los clústeres de una sola aparición no aportan al

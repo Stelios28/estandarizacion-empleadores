@@ -183,6 +183,12 @@ SIGLAS_SEPARADAS: list[tuple[re.Pattern, str, str]] = [
     # `IN DEPENDIENTE` es `INDEPENDIENTE` partido, no un dependiente económico.
     # Va antes que cualquier regla sobre `DEPENDIENTE` para no invertir el sentido.
     (re.compile(r'\bIN\s+DEPENDIENTE\b'), 'INDEPENDIENTE', 'IN_DEPENDIENTE_unido'),
+    # `M S` encabezando el nombre es «Mini Super», la tienda de barrio panameña.
+    # 463 registros y el patrón no deja duda al leerlos juntos: `M S CHEN LOU`,
+    # `M S SAN SEBASTIAN`, `M S RIO RITA`, `M S EL CRISOL` — apellido chino o
+    # nombre de santo, que es exactamente cómo se llaman los abarroteros del país.
+    # Solo al inicio: en medio del nombre `M S` puede ser iniciales de persona.
+    (re.compile(r'^M\s+S\b'), 'MINISUPER', 'sigla_MS_minisuper'),
 ]
 
 # --- Truncación del origen -------------------------------------------------
@@ -193,11 +199,17 @@ SIGLAS_SEPARADAS: list[tuple[re.Pattern, str, str]] = [
 #
 # Cada raíz tiene 7 caracteres o más: con menos empieza a tocar palabras ajenas
 # (`ESTUDIANT` capturaría `ESTUDIANTIL`, que es un adjetivo de negocio).
+# Se probó relajar la guarda de prefijo del corrector de erratas para que cubriera
+# estos casos de forma genérica y salió mal: reabría `CONSULTOR -> CONSULTORIO` y
+# metía 1.200 plurales inútiles (`PROYECTO -> PROYECTOS`). La truncación por prefijo
+# se ataca aquí, enumerada y acotada, no aflojando una guarda que sirve (D23).
 RAICES_TRUNCADAS: list[tuple[str, str]] = [
     ('INDEPENDIEN', 'INDEPENDIENTE'),
     ('JUBILAD', 'JUBILADO'),
     ('PENSIONAD', 'PENSIONADO'),
     ('DESEMPLEAD', 'DESEMPLEADO'),
+    ('UNIVERSIDA', 'UNIVERSIDAD'),
+    ('MINISTERI', 'MINISTERIO'),
 ]
 
 
@@ -254,7 +266,12 @@ TOKENS_DIRECCION_DEBILES: set[str] = {
     'EDIFICIO', 'EDIF', 'APTO', 'APT', 'AP', 'APARTAMENTO', 'PISO', 'LOCAL', 'CASA',
     'TORRE', 'PLAZA', 'ENTRADA', 'FRENTE', 'DETRAS', 'CONTIGUO', 'ALTOS',
     'RESIDENCIAL', 'BARRIO', 'VIA', 'KM', 'KILOMETRO', 'NO', 'NRO', 'NUMERO',
-    'SECTOR', 'MANZANA', 'LOTE', 'FINCA', 'PARQUE',
+    'SECTOR', 'MANZANA', 'LOTE', 'PARQUE',
+    # `FINCA` estaba aquí y mandaba 212 registros a «no identificable - dirección».
+    # Pero `FINCA LA CEIBA` y `FINCA LOS LIMONES` no son la dirección de nadie: son
+    # el lugar de trabajo, y su actividad es la agricultura. En Panamá la finca es
+    # una unidad productiva, no una referencia de ubicación. Sale de aquí y se queda
+    # solo como token agrícola, donde ya estaba con peso 8 (D23).
 }
 
 # Provincias y distritos de Panamá. Solos no indican dirección — hay muchas empresas
@@ -279,6 +296,13 @@ LUGARES_TOKEN -= {'DEL', 'DE', 'LA', 'EL', 'LOS', 'SAN', 'SANTA', 'VIA', 'COSTA'
                   'PUNTA', 'VERAGUAS'}
 
 
+# Vocabulario del sistema de nómina, no del empleador. `PLANILLA MAERSK` y `MAERSK`
+# son el mismo empleador visto desde dos capturas distintas.
+PALABRAS_ADMINISTRATIVAS: set[str] = {
+    'PLANILLA', 'PLANILLAS', 'NOMINA', 'ASALARIADO', 'ASALARIADA',
+}
+
+
 def quitar_calificadores(tokens: list[str]) -> tuple[list[str], list[str]]:
     """
     Separa del nombre los calificadores que identifican **sucursal o cargo**, no
@@ -299,6 +323,14 @@ def quitar_calificadores(tokens: list[str]) -> tuple[list[str], list[str]]:
     """
     calificadores: list[str] = []
     nucleo = list(tokens)
+
+    # `PLANILLA` es cómo se paga, no para quién se trabaja. El empleador viene
+    # detrás: `PLANILLA MAERSK`, `PLANILLA KRAFT`, `PLANILLA LOCKHEED MARTIN`.
+    # Retirarla une esos 62 registros con los que nombran la empresa a secas (D23).
+    resto = [t for t in nucleo if t not in PALABRAS_ADMINISTRATIVAS]
+    if resto and len(resto) < len(nucleo):
+        calificadores.extend(t for t in nucleo if t in PALABRAS_ADMINISTRATIVAS)
+        nucleo = resto
 
     # Cargos: en cualquier posición, son atributo de la persona.
     resto = [t for t in nucleo if t not in MARCADORES_OCUPACION]
@@ -852,7 +884,11 @@ _regla('LOGISTICA|LOGISTIC|LOGISTICS|ALMACENAJE|ALMACENADORA|COURIER|'
 _regla('HOTEL|HOTELES|HOTELERA|HOSTAL|RESORT|MOTEL|APARTHOTEL|POSADA|CABANAS',
        'I', '55', 'Alojamiento', 8)
 _regla('RESTAURANTE|RESTAURANT|CAFETERIA|FONDA|PIZZERIA|MARISQUERIA|PARRILLADA|'
-       'CAFE|BAR|CANTINA|DISCOTECA|CATERING|COMIDAS|KIOSCO|REFRESQUERIA',
+       'CAFE|BAR|CANTINA|DISCOTECA|CATERING|COMIDAS|KIOSCO|REFRESQUERIA|'
+       # El corpus escribe `KIOSKO` con K —104 registros— y la regla solo tenía la
+       # forma con C. `MESON` y `RINCONCITO` son los otros dos nombres con que se
+       # bautiza una fonda en Panamá (D23).
+       'KIOSKO|MESON|RINCONCITO|REFRESQUERIA|SODA',
        'I', '56', 'Servicio de comidas y bebidas', 8)
 
 # --- J. Información y comunicaciones --------------------------------------
@@ -945,7 +981,11 @@ _regla('LAVANDERIA|TINTORERIA|LAVAMATIC', 'S', '96', 'Otros servicios personales
 _regla('FUNERARIA|CREMATORIO|CEMENTERIO|SERVICIOS FUNERARIOS',
        'S', '96', 'Otros servicios personales', 9)
 _regla('IGLESIA|PARROQUIA|MINISTERIO RELIGIOSO|TEMPLO|CONGREGACION|MISION|'
-       'DIOCESIS|COMUNIDAD RELIGIOSA|HERMANAS|CAPILLA',
+       'DIOCESIS|COMUNIDAD RELIGIOSA|HERMANAS|CAPILLA|'
+       # La sede del obispo y la casa del párroco son empleadores reales —tienen
+       # sacristán, secretaria, personal de mantenimiento— y quedaban sin sector
+       # o, peor, como dirección (`CASA CURAL SAN JUAN BAUTISTA`). D23.
+       'OBISPADO|CASA CURAL|CURIA|VICARIA|SANTUARIO',
        'S', '94', 'Actividades de asociaciones', 8)
 _regla('FUNDACION|ASOCIACION|ONG|SINDICATO|GREMIO|CAMARA DE COMERCIO|'
        'COOPERATIVA DE SERVICIOS|PATRONATO',

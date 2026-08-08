@@ -221,6 +221,118 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D23 - Muestreo aleatorio: lo que el conteo por frecuencia no ensena
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** *«busca aleatoriamente nombres que puedan dar informacion y mejorar
+  nuestro trabajo, agotemos todos los recursos antes de empezar a generar costos»*.
+
+### Una tercera forma de mirar el residuo
+
+Hasta aqui el residuo se habia revisado de dos maneras: **por volumen** (D5-D17), que
+muestra los errores caros, y **alfabeticamente** (D18-D22), que agrupa las familias.
+El muestreo aleatorio es la tercera, y encuentra lo que las otras dos no pueden:
+patrones frecuentes que ninguna palabra delata y que estan repartidos por todo el
+alfabeto.
+
+220 nombres al azar -160 del bloque sin sector, 60 del no identificable- produjeron
+seis hipotesis. Las seis se verificaron contra el corpus antes de escribir una linea.
+
+### 1. `M S` al inicio es «Mini Super» — 463 registros
+
+El hallazgo grande, y ninguna de las dos vistas anteriores lo habria encontrado: `M S`
+son dos tokens de una letra, invisibles en cualquier conteo de palabras. Leidos juntos
+no dejan duda:
+
+```
+M S CHEN LOU 7      M S SAN SEBASTIAN     M S RIO RITA
+M S QUING LEE       M S EL CRISOL         M S AGUA BENDITA
+```
+
+Apellido chino o nombre de santo: es exactamente como se llama la abarroteria de barrio
+en Panama. Entra a `SIGLAS_SEPARADAS` junto a `P H` y `C S S`, y solo al inicio del
+nombre — en medio, `M S` puede ser las iniciales de una persona.
+
+Es la **tercera** sigla partida que aparece. El origen escribe las siglas con las
+letras sueltas y eso ya no es una anecdota: es una caracteristica del campo.
+
+### 2. `FINCA` no es una direccion — 212 registros
+
+`FINCA` estaba en los tokens debiles de direccion y mandaba a «no identificable» cosas
+como `FINCA LA CEIBA`, `FINCA LOS LIMONES`, `FINCA EL MACHO`. Pero en Panama la finca
+no es una referencia de ubicacion: es la unidad productiva, y su actividad es la
+agricultura. Sale de los tokens de direccion y se queda solo como token agricola,
+donde ya estaba con peso 8.
+
+Es otra vez el patron de D10: una palabra que dos categorias se disputan, con el
+ganador elegido implicitamente y mal.
+
+### 3. `PLANILLA` es como se paga, no para quien se trabaja — 62 registros
+
+`PLANILLA MAERSK`, `PLANILLA KRAFT`, `PLANILLA LOCKHEED MARTIN`. La planilla es la
+nomina; el empleador viene detras. Entra a un conjunto nuevo, `PALABRAS_ADMINISTRATIVAS`,
+que `quitar_calificadores` retira igual que retira los cargos. Beneficio secundario:
+esos 62 registros se unen con los que nombran la empresa a secas.
+
+### 4, 5 y 6. Vocabulario que faltaba
+
+- **`KIOSKO` con K** — la regla solo tenia `KIOSCO` con C, y el corpus escribe la otra.
+  Con `MESON` y `RINCONCITO`, 104 registros de comida.
+- **`OBISPADO` y `CASA CURAL`** — la sede del obispo y la casa del parroco son
+  empleadores reales. `CASA CURAL` ademas caia como direccion, porque `CASA` cuenta
+  como indicio de inmueble; se anadio `_GIROS_TRAS_CASA` para los giros que se
+  escriben sin articulo en medio.
+- **`UNIVERSIDA` y `MINISTERI`** truncados, a `RAICES_TRUNCADAS`.
+
+### Un experimento que salio mal, y por que se revirtio
+
+`UNIVERSIDA` y `MINISTERI` son truncaciones que el corrector de erratas de D22 no
+coge, porque su guarda rechaza que un token sea prefijo del otro. La tentacion era
+relajarla: aceptar el prefijo cuando el token es el **mas corto**, que es la forma que
+tiene una truncacion.
+
+Se probo en seco. El resultado:
+
+| | Antes | Con la guarda relajada |
+|---|---:|---:|
+| Sustituciones | 2.266 | 3.000+ |
+| `CONSULTOR -> CONSULTORIO` | bloqueada | **reabierta, 128 registros** |
+| `PROYECTO -> PROYECTOS` | bloqueada | reabierta, 296 |
+| `REPUESTO -> REPUESTOS` | bloqueada | reabierta, 223 |
+
+Ganaba 52 registros y perdia mas de 1.200 en ruido, con un error de sector de por
+medio. Revertido.
+
+**La leccion: una guarda que funciona no se afloja para cubrir un caso que se puede
+enumerar.** `RAICES_TRUNCADAS` tiene ahora seis entradas y resuelve el problema sin
+tocar nada que ya estuviera bien.
+
+### Efecto medido
+
+| | Antes (D22) | Despues |
+|---|---:|---:|
+| Con sector CIIU | 189.454 | **190.303** |
+| Cobertura sobre empleadores | 61,26 % | **61,49 %** |
+| No identificable | 2.074 | **1.849** |
+| Empleador sin sector | 125.758 | **125.140** |
+| Empleadores identificados | 309.251 | **309.476** |
+
+### Lo que esto dice del metodo
+
+Tres vistas del mismo residuo, tres tipos de hallazgo distintos:
+
+| Vista | Encuentra | Ejemplo |
+|---|---|---|
+| Por volumen | El error caro | `INSTITUTO` con peso 9 (D14) |
+| Alfabetica | La familia | `AMA DE CASA*`, `ABOGAD*` (D18-D20) |
+| **Aleatoria** | **El patron sin palabra** | **`M S` = Mini Super** |
+
+Un ciclo de mantenimiento serio deberia usar las tres. La aleatoria es la unica que
+encuentra lo que no se puede buscar porque no se sabe que existe.
+
+---
+
 ## D22 - Lo que se encuentra en el bloque chico casi siempre paga en el grande
 
 - **Fecha:** 2026-08-08
