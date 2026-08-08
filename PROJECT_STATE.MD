@@ -7,7 +7,7 @@ con score de confianza y explicación por registro.
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo doce correcciones (D8-D19). Solo queda la fase 7 (validación externa), que está
+produjo trece correcciones (D8-D20). Solo queda la fase 7 (validación externa), que está
 construida y probada en su ruta de estimación pero no ejecutada: requiere credencial.
 
 ## Misión activa
@@ -20,10 +20,10 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 | Métrica | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 310.909 · 96,26 % |
-| Empleadores únicos (maestro) | 200.612 |
+| Empleadores identificados | 310.912 · 96,26 % |
+| Empleadores únicos (maestro) | 200.613 |
 | Consolidación de variantes | 35,5 % |
-| Con sector CIIU | 188.300 · 60,56 % de los empleadores |
+| Con sector CIIU | 188.858 · 60,74 % de los empleadores |
 | Confianza promedio / mediana | 51,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
@@ -56,6 +56,8 @@ verificación individual 130.960 (40,5 %).
   marcador suelto de inactividad
 - **D19** — El jubilado nombra a su empleador y el estudiante a su universidad:
   `SECTOR_RECUPERABLE` generaliza D18 a los inactivos
+- **D20** — Cada situación laboral es una categoría propia (ama de casa, jubilado,
+  estudiante, desempleado), no un cajón llamado «no identificable»
 
 ## Pendientes prioritarios
 - **Alta** — Decidido por negocio: los clústeres de una sola aparición no aportan al
@@ -72,7 +74,7 @@ verificación individual 130.960 (40,5 %).
 - **R2 Sin frecuencias** — mitigado: el canónico se elige por calidad ortográfica medida sobre el corpus
 - **R3 Truncamiento** — mitigado: 20.532 registros tratados con regla de prefijo asimétrica
 - **R7 Costo fase 7** — acotado: caché persistente, lotes de 40, presupuesto por corrida, prioridad por volumen
-- **R8 Cobertura sectorial 60,6 %** — abierto. Se cierra solo con la fase 7
+- **R8 Cobertura sectorial 60,7 %** — abierto. Se cierra solo con la fase 7
 - **R11 IPAT en agencias de viajes** — cerrado con D15: pasó a administración pública
 - **R12 Asociaciones de padres de familia** — abierto, 11 registros. Caen en Enseñanza
   porque la frase de la escuela es más larga; no se fuerza por volumen
@@ -84,7 +86,7 @@ verificación individual 130.960 (40,5 %).
 ## Archivos actualmente afectados
 - `prueba_tecnica_ing_datos.xlsx` — fuente de verdad, **solo lectura, nunca modificada**
 - `codigo/` — 6 orquestadores + 6 módulos (reglas, normalización, canónico, sector, confianza, común)
-- `salidas/` — 6 entregables generados
+- `salidas/` — 7 entregables generados, incluido `revision_sin_sector.xlsx`
 - `Documentacion/DOCUMENTO_TECNICO.MD` — documento técnico con las 5 preguntas estratégicas
 - `Documentacion/PROPUESTA_EVOLUCION.MD` — evolución del producto analítico
 - `Documentacion/Mantenimiento/` — perfilamiento y decisiones

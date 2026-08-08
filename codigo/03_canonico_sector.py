@@ -187,7 +187,8 @@ def main() -> None:
                 reclasificados += 1
                 resueltos.append([
                     cid, n_claves, len(variantes), rep['limpio'],
-                    NOMBRE_POR_TIPO[tipo], 'reclasificacion_cluster', '', '',
+                    (reglas.categoria_situacion(rep['limpio'], rep['limpio'].split())
+                     or NOMBRE_POR_TIPO[tipo]), 'reclasificacion_cluster', '', '',
                     ETIQUETA_POR_TIPO[tipo], 'No aplica', 'reclasificacion',
                     'el clúster coincide con el marcador "%s"' % marcador, 0,
                     'reclasificado en fase 11 por similitud con un marcador conocido',

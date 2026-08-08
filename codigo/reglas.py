@@ -515,6 +515,30 @@ _regla('INSTITUTO', 'P', '85', 'Enseñanza', 3)
 _regla('SUPER', 'G', '47', 'Comercio al por menor', 3)
 _regla('GLOBAL', 'N', '82', 'Actividades de apoyo a empresas', 1)
 
+# Ampliación del vocabulario de oficios con el tramo alfabético A-B (D20).
+_regla('ARTESANO|ARTESANA|ARTESANIA|ARTESANIAS|EBANISTERIA ARTESANAL',
+       'C', '32', 'Otras industrias manufactureras', 8)
+_regla('ARTISTA|MUSICO|PINTOR ARTISTICO|ESCULTOR|BAILARIN|ACTOR',
+       'R', '90', 'Actividades creativas y artísticas', 8)
+_regla('ASEADORA|ASEADOR|LIMPIADORA|CONSERJE|SERVICIOS DE ASEO',
+       'N', '81', 'Servicios a edificios y paisajismo', 8)
+_regla('ASERRADOR|ASERRIO|MADERERO|LENADOR',
+       'A', '02', 'Silvicultura y extracción de madera', 8)
+_regla('BILLETERO|BILLETERA|VENTA DE BILLETES|LOTERO',
+       'R', '92', 'Actividades de juegos de azar', 8)
+_regla('BIOLOGO|BIOLOGA|QUIMICO|LABORATORISTA|INVESTIGADOR',
+       'M', '72', 'Investigación científica y desarrollo', 7)
+_regla('AGRONOMO|AGRONOMA|AGROEXPORTADOR|AGROGANADERA|AGROGANADERO|'
+       'AGROINDUSTRIAL|AGROSERVICIO', 'A', '01',
+       'Agricultura, ganadería, caza', 8)
+_regla('AGROVETERINARIA|AGROVETERINARIO|VETERINARIA|VETERINARIO|CLINICA VETERINARIA',
+       'M', '75', 'Actividades veterinarias', 8)
+_regla('ASADOS Y FRITURAS|FRITURAS|VENTA DE COMIDAS|KIOSKO DE COMIDA',
+       'I', '56', 'Servicio de comidas y bebidas', 8)
+_regla('CUIDA NINOS|CUIDADORA DE NINOS|CUIDADO DE NINOS|CUIDADORA|'
+       'CUIDADO DE ANCIANOS', 'Q', '87',
+       'Atención en instituciones', 7)
+
 # --- Oficio del trabajador independiente (D18) -----------------------------
 # `ABOGADA INDEPENDIENTE`, `ACUICULTOR INDEPENDIENTE`, `INDEPENDIENTE AGRIMENSURA`.
 # El registro no nombra una empresa —no la hay— pero **sí dice a qué se dedica la
@@ -1210,6 +1234,64 @@ GAZETTEER: dict[str, tuple[str, str, str]] = {
 #                  El plural es el que lleva el sentido industrial.
 #   GUARDIA      — apellido y provincia, además de vigilante.
 MORFOLOGIA_EXCLUIDA: set[str] = {'LABORATORIO', 'GUARDIA'}
+
+
+# ==========================================================================
+# Categorías de situación laboral (D20)
+# ==========================================================================
+# Todos los registros que no son un empleador compartían una sola etiqueta:
+# «No identificable - No es un empleador». 4.346 registros en un cajón, cuando
+# el texto dice con precisión qué es cada uno.
+#
+# Es el mismo error que corrigió D8 a mayor escala: llamar «no identificable» a
+# algo que está perfectamente identificado. Un ama de casa no es un dato que no
+# se pudo leer; es una situación laboral concreta, y agruparla con los jubilados
+# y los fallecidos pierde información que el texto sí traía.
+
+_GRUPOS_SITUACION: list[tuple[str, set[str]]] = [
+    # El orden importa: `AMA DE CASA ACTUALMENTE NO TRABAJA` es ama de casa, no
+    # una desempleada. Lo más específico se evalúa primero.
+    ('Ama de casa', {
+        'AMA DE CASA', 'AMO DE CASA', 'AMA DE LLAVES',
+        'ADMINISTRADORA DEL HOGAR', 'ADMINISTRADOR DEL HOGAR',
+        'ADMINISTRADORA DE SU HOGAR', 'ADMINISTRADORA EL HOGAR',
+        'ADMON DEL HOGAR', 'ADMO DEL HOGAR', 'ADMINISTRADORA DOMESTICA',
+        'LABORES DEL HOGAR', 'OFICIOS DEL HOGAR', 'TAREAS DEL HOGAR',
+    }),
+    ('Jubilado o pensionado', {
+        'JUBILADO', 'JUBILADA', 'PENSIONADO', 'PENSIONADA',
+        'RETIRADO', 'RETIRADA',
+    }),
+    ('Estudiante', {'ESTUDIANTE'}),
+    ('Desempleado', {
+        'DESEMPLEADO', 'DESEMPLEADA', 'CESANTE', 'NO TRABAJA', 'SIN TRABAJO',
+        'SIN EMPLEO', 'NO LABORA', 'NO ESTA LABORANDO', 'NO ESTA TRABAJANDO',
+        'QUEDO CESANTE', 'ACABA DE QUEDAR CESANTE', 'SIN EMPLEO ACTUAL',
+    }),
+]
+
+ETIQUETA_SITUACION: dict[str, str] = {
+    marcador: etiqueta
+    for etiqueta, marcadores in _GRUPOS_SITUACION
+    for marcador in marcadores
+}
+
+
+def categoria_situacion(texto: str, tokens: list[str]) -> str:
+    """
+    Etiqueta canónica de la situación laboral declarada, o '' si no aplica.
+
+    Se consulta en el orden de `_GRUPOS_SITUACION`: primero la frase completa,
+    después el token suelto.
+    """
+    conjunto = set(tokens)
+    for etiqueta, marcadores in _GRUPOS_SITUACION:
+        for m in marcadores:
+            if ' ' in m and m in texto:
+                return etiqueta
+        if conjunto & marcadores:
+            return etiqueta
+    return ''
 
 
 SECTOR_DIRECCION = 'No identificable - Direcciones'

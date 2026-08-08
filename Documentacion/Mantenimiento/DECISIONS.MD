@@ -221,6 +221,78 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D20 — Cada situación laboral es una categoría, no «no identificable»
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** Javier revisó de nuevo el tramo A-B y dijo: *«veo los mismos de antes sin
+  identificar; independiente y ama de casa siguen quedando por fuera»*. Tenía razón, y el
+  problema no era el que yo había estado arreglando.
+
+### El defecto real
+
+D18 y D19 recuperaron el **sector** de estos registros. Pero el `nombre_propuesto` —la
+columna que se lee al revisar— seguía siendo la misma para todos:
+
+```
+4.346 registros  ->  «No identificable - No es un empleador»
+```
+
+Ama de casa, jubilado, estudiante, desempleado y anotaciones del sistema, todos en el mismo
+cajón. Al ordenar el archivo por `nombre_original` la lista se veía **exactamente igual que
+antes de empezar**, porque la columna de resultado no distinguía nada.
+
+**Es el error de D8 otra vez, y a mayor escala:** llamar «no identificable» a algo que está
+perfectamente identificado. Un ama de casa no es un dato ilegible; es una situación laboral
+concreta que el texto declara sin ambigüedad.
+
+### La corrección
+
+Cada situación tiene su etiqueta canónica, resuelta por `reglas.categoria_situacion()`:
+
+| Categoría | Registros | Ejemplos de entrada |
+|---|---:|---|
+| Trabajador independiente | 5.577 | `ABOGADA INDEPENDIENTE`, `ADCOAST INDEPENDIENTE` |
+| Jubilado o pensionado | 2.386 | `CSS JUBILADO`, `ABOGADA RETIRADA`, `ACP JUBILADO` |
+| Estudiante | 496 | `ESTUDIANTE DE UNIVERSIDAD INTERAMERICANA` |
+| Ama de casa | 285 | `AMA DE CASA`, `ADMON DEL HOGAR`, `LABORES DEL HOGAR` |
+| Desempleado | 203 | `ACTUALMENTE NO LABORA`, `QUEDO CESANTE` |
+| Ocupación declarada sin empleador | 129 | `ASISTENTE`, `ADMINISTRADOR` |
+| No identificable - No es un empleador | 847 | anotaciones del sistema sin situación declarada |
+
+El orden de evaluación importa: `AMA DE CASA ACTUALMENTE NO TRABAJA` es un ama de casa, no
+una desempleada. Lo más específico se evalúa primero.
+
+Además `OCUPACION` entró a `SECTOR_RECUPERABLE`: `AGRICULTOR` a secas es tipo ocupación,
+pero su sector es agricultura y no había razón para perderlo.
+
+### Vocabulario nuevo del tramo A-B
+
+`ARTESANO`, `ARTISTA`, `ASEADORA`, `ASERRADOR`, `BILLETERO`, `BIOLOGO`, `AGRONOMO`,
+`AGROVETERINARIA`, `AGROEXPORTADOR`, `CUIDA NINOS`, `ASADOS Y FRITURAS`. Estrenan tres
+secciones que no se usaban: **R/90 actividades creativas**, **M/75 veterinarias** y
+**Q/87 atención en instituciones**.
+
+### Un archivo para el ciclo de revisión
+
+Se añadió `salidas/revision_sin_sector.xlsx`: los registros sin sector, **ordenados
+alfabéticamente**, con filtros y encabezado fijo. Es la vista que produjo D18, D19 y D20.
+
+Ordenar por volumen muestra los errores caros; ordenar alfabéticamente agrupa las
+**familias** —`ABOGAD*`, `ADMINISTRADOR*`, `AMA DE CASA*`— y ahí se ve el patrón que la
+frecuencia esconde. El ciclo de mantenimiento debería usar las dos vistas.
+
+### Lección
+
+Estuve tres iteraciones mejorando el **sector** de estos registros mientras la columna que
+Javier estaba leyendo no cambiaba. La métrica subía y la experiencia de revisión seguía
+idéntica.
+
+**Cuando alguien dice «esto sigue igual» después de un cambio medido, la respuesta correcta
+no es mostrarle la métrica: es mirar exactamente lo que está mirando.**
+
+---
+
 ## D19 — El jubilado nombra a su empleador, y el estudiante a su universidad
 
 - **Fecha:** 2026-08-08

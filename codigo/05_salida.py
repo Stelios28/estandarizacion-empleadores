@@ -10,6 +10,7 @@ Genera los entregables:
   salidas/maestro_corporativo.csv    una fila por empleador único
   salidas/kpis_calidad.json          métricas de calidad de datos
   salidas/concentracion_sectorial.csv  vista para riesgo de cartera
+  salidas/revision_sin_sector.xlsx   lo que queda sin sector, en orden alfabético
 
 Si la fase 7 ya corrió, sus resultados se incorporan automáticamente.
 
@@ -34,7 +35,7 @@ TIPOS_EMPLEADOR = {'EMPRESA', 'PERSONA_NATURAL'}
 # actividad de la que vive la persona: el oficio del independiente, el empleador
 # del que se jubiló, la universidad donde estudia. Conservan el sector aunque el
 # nombre propuesto sea la etiqueta genérica del tipo.
-SECTOR_RECUPERABLE = {'INDEPENDIENTE', 'INACTIVO'}
+SECTOR_RECUPERABLE = {'INDEPENDIENTE', 'INACTIVO', 'OCUPACION'}
 
 ETIQUETA_POR_TIPO = {
     'DIRECCION': (reglas.SECTOR_DIRECCION, reglas.SECTOR_DIRECCION),
@@ -88,6 +89,17 @@ def main() -> None:
                 score = CONFIANZA_TIPO[tipo]
                 seccion = division = ''
                 vista = 'No aplica'
+                # Cada situación laboral tiene su etiqueta. Meter al ama de casa,
+                # al jubilado, al estudiante y al desempleado en un mismo cajón
+                # llamado «no identificable» pierde información que el texto sí
+                # traía, y repite el error de D8 a mayor escala (D20).
+                if tipo in ('INACTIVO', 'ANOTACION'):
+                    etq = reglas.categoria_situacion(fila['limpio'],
+                                                     fila['limpio'].split())
+                    if etq:
+                        nombre = etq
+                elif tipo == 'OCUPACION':
+                    nombre = 'Ocupación declarada sin empleador'
                 # El tipo dice que no hay vínculo laboral corporativo vigente; no dice
                 # que no haya información. `INDEPENDIENTE AGRIMENSURA` declara su
                 # oficio y `PANAMA CANAL COMMISSION JUBILADO` declara de dónde viene
@@ -200,6 +212,30 @@ def main() -> None:
         for fila in dataset:
             ws.append(list(fila))
         wb.save(os.path.join(comun.DIR_SALIDAS, 'dataset_resultado.xlsx'))
+
+    # ---- archivo de trabajo para el ciclo de revisión ---------------------
+    # Ordenado alfabéticamente a propósito: ordenar por volumen muestra los
+    # errores caros, pero ordenar alfabéticamente agrupa las **familias**
+    # (`ABOGAD*`, `ADMINISTRADOR*`, `AMA DE CASA*`) y ahí se ve el patrón que la
+    # frecuencia esconde. D18, D19 y D20 salieron todas de esta vista.
+    with comun.Fase('escribir archivo de revisión'):
+        pendientes = sorted(
+            (a[0].lstrip("'"), a[2], a[3], a[9], a[7])
+            for a in auditoria
+            if not a[4] and a[9] in TIPOS_EMPLEADOR
+        )
+        wb = openpyxl.Workbook()
+        wb.remove(wb.active)
+        ws = wb.create_sheet('sin sector')
+        ws.append(['nombre_original', 'nombre_propuesto', 'sector_propuesto',
+                   'tipo_registro', 'confianza'])
+        for fila in pendientes:
+            ws.append(list(fila))
+        ws.freeze_panes = 'A2'
+        ws.auto_filter.ref = ws.dimensions
+        wb.save(os.path.join(comun.DIR_SALIDAS, 'revision_sin_sector.xlsx'))
+        comun.log('  revision_sin_sector.xlsx: %d registros sin sector, alfabético'
+                  % len(pendientes))
 
     # ---- KPIs de calidad de datos ---------------------------------------
     n = len(dataset)
