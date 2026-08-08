@@ -28,7 +28,7 @@ import confianza
 import reglas
 import sector as sector_mod
 
-TIPOS_EMPLEADOR = {'EMPRESA', 'INDEPENDIENTE_CON_ACTIVIDAD', 'PERSONA_NATURAL'}
+TIPOS_EMPLEADOR = {'EMPRESA', 'PERSONA_NATURAL'}
 
 ETIQUETA_POR_TIPO = {
     'DIRECCION': (reglas.SECTOR_DIRECCION, reglas.SECTOR_DIRECCION),
@@ -80,9 +80,21 @@ def main() -> None:
             if tipo not in TIPOS_EMPLEADOR:
                 nombre, sec = ETIQUETA_POR_TIPO[tipo]
                 score = CONFIANZA_TIPO[tipo]
+                seccion = division = ''
+                vista = 'No aplica'
+                # Un independiente se agrupa como independiente, pero si declaró su
+                # oficio —`INDEPENDIENTE AGRIMENSURA`— la actividad es un dato útil
+                # y gratuito: se conserva el sector aunque el nombre sea genérico.
+                if tipo == 'INDEPENDIENTE' and fila['nucleo']:
+                    s_, d_, origen_, _ = sector_mod.clasificar(
+                        fila['nucleo'], fila['nucleo'].split())
+                    if s_:
+                        seccion, division = s_, d_
+                        sec = sector_mod.etiqueta(s_, d_)
+                        vista = sector_mod.vista_ejecutiva(s_)
                 dataset.append((original, nombre, sec))
                 auditoria.append([
-                    original, fila['limpio'], nombre, sec, '', '', 'No aplica',
+                    original, fila['limpio'], nombre, sec, seccion, division, vista,
                     score, confianza.banda(score), tipo, '', '',
                     fila['traza'],
                 ])

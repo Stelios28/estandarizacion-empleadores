@@ -221,6 +221,96 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D13 — Diccionario de empleadores ancla y criterio actividad-sobre-propiedad
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** Javier aportó una investigación propia sobre los mayores empleadores e
+  instituciones de Panamá, apoyada en la planilla del sector público de la Contraloría a
+  diciembre de 2025, reguladores sectoriales y Merco Empresas Panamá 2025.
+
+### La decisión de fondo: ¿el sector lo decide el dueño o la actividad?
+
+La instrucción verbal («Lotería Nacional es gobierno», «toda policlínica es CSS, por tanto
+gobierno») contradecía el documento aportado, que recomienda lo contrario citando la
+metodología del INEC (CINU Rev. 4.1) y de Naciones Unidas: *el estatus legal o
+institucional de la entidad no determina por sí mismo su clasificación*.
+
+Se planteó la contradicción y **Javier decidió: clasificar por actividad.** Consecuencias:
+
+| Entidad | Por propiedad sería | Por actividad es |
+|---|---|---|
+| Policlínica / hospital de la CSS | Administración pública | Salud humana |
+| Lotería Nacional | Administración pública | Artes, entretenimiento y recreación |
+| MiBus, Metro de Panamá | Administración pública | Transporte terrestre |
+| Banco Nacional, Caja de Ahorros | Administración pública | Intermediación financiera |
+| Universidad de Panamá, UTP, UNACHI | Administración pública | Enseñanza |
+| IDAAN | Administración pública | Suministro de agua |
+| ETESA | Administración pública | Suministro de electricidad |
+| Autoridad del Canal | Administración pública | Apoyo al transporte |
+
+Administración pública queda reservada a ministerios, tribunales, Asamblea, policía,
+reguladores y administradores de programas del Estado. Es el criterio que ya aplicaba el
+pipeline; ahora es explícito y está documentado.
+
+**Por qué importa para Riesgo:** con el criterio de propiedad, el sector público se comería
+sectores enteros y el análisis de concentración de cartera perdería resolución justo donde
+más la necesita. Una escuela y un ministerio no tienen el mismo perfil de riesgo laboral.
+
+### Diccionario ancla
+
+El gazetteer pasó de 60 a **185 entradas**, organizadas por bloque: Estado como
+administración pública, Estado clasificado por actividad, financiero, comercio,
+manufactura, servicios a empresas, profesionales, tecnología, transporte y puertos, salud,
+alojamiento, construcción, energía, minería, agro y organismos internacionales.
+
+- **275 anclas dispararon** sobre 9.308 registros (antes 5.268).
+- Mayor impacto: Caja de Seguro Social (1.177), Ministerio de Educación (515), Ministerio
+  de Salud (366), Tocumen (277), Policía Nacional (242), Universidad de Panamá (209).
+
+### Dos defectos encontrados al integrarlo
+
+1. **`IDAAN` caía en Enseñanza.** `expandir_tokens` corre **antes** de consultar el
+   gazetteer, así que la sigla llegaba desplegada como `INSTITUTO DE ACUEDUCTOS...` y el
+   token `INSTITUTO` (peso 9) disparaba enseñanza. Se añadieron las claves en su forma ya
+   expandida para `IDAAN`, `ACP`, `AMP`, `ATP`, `IFARHU`, `SENAFRONT`, `SENAN` y `SENADIS`.
+   Lección: un gazetteer que se consulta después de una transformación tiene que estar
+   escrito en el idioma de la salida de esa transformación, no en el de la entrada.
+2. **`INDEPENDIENTE AGRIMENSURA` no se detectaba.** El marcador se buscaba como frase
+   completa, así que solo casaba si el registro era exactamente `INDEPENDIENTE`. Ahora se
+   busca también como token suelto.
+
+### Independientes
+
+Por instrucción de negocio, **todo lo que se declara independiente se agrupa como
+independiente**: no es un empleador corporativo, no entra al maestro y no consume
+validación externa. 5.583 registros (antes 136).
+
+Se conserva sin embargo el sector cuando el texto declara el oficio
+(`INDEPENDIENTE AGRIMENSURA` → arquitectura e ingeniería): agrupar por nombre no obliga a
+tirar la actividad, y el dato sale gratis.
+
+### Efecto medido
+
+| | Antes | Ahora |
+|---|---:|---:|
+| Con sector CIIU | 177.955 · 56,2 % | **178.979 · 57,6 %** |
+| Registros por gazetteer | 5.268 | **9.308** |
+| Anclas distintas activas | ~60 | **275** |
+| Cola de fase 7 | 95.745 clústeres | **93.501** |
+| Independientes agrupados | 136 | 5.583 |
+
+La tasa de identificación baja de 97,96 % a 96,19 %, y es correcto: los 5.583
+independientes dejaron de contarse como empleadores corporativos porque no lo son.
+
+**Lección:** este fue el aporte de mayor rendimiento por unidad de esfuerzo de todo el
+proyecto, y no vino del dato ni del código, sino de investigación de dominio. Confirma D12
+a mayor escala: el vocabulario de negocio no se infiere del corpus, se aporta. La
+arquitectura ya lo permitía —`reglas.py` separado del motor— y por eso integrar 125
+entidades nuevas fue una edición de diccionario, no un cambio de diseño.
+
+---
+
 ## D12 — La propiedad horizontal es un empleador, no un inmueble
 
 - **Fecha:** 2026-08-07

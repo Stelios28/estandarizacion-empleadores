@@ -15,14 +15,14 @@ cada decisión.
 | Resultado | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 316.418 · **97,96 %** |
-| Empleadores únicos en el maestro | 204.393 |
+| Empleadores identificados | 310.684 · **96,19 %** |
+| Empleadores únicos en el maestro | 200.456 |
 | Consolidación de variantes | **35,4 %** |
-| Con sector CIIU asignado | 177.955 · **56,2 %** de los empleadores |
+| Con sector CIIU asignado | 178.979 · **57,6 %** de los empleadores |
 | Tiempo total de ejecución | **~2 minutos** en un portátil |
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 
-El corte del 56,2 % en cobertura sectorial no es una limitación del método: es el
+El corte del 57,6 % en cobertura sectorial no es una limitación del método: es el
 punto exacto donde la evidencia interna se agota. Los 95.922 clústeres restantes
 son marcas sin palabra descriptiva —`BRICKHAUS`, `SOLINTECSA`, `WILHELMSEN`— que
 requieren conocimiento externo. La fase 7 está construida y su costo medido:
@@ -414,7 +414,7 @@ consultó: un dato externo sin fecha de vigencia es una suposición.
 
 | KPI | Definición | Valor hoy | Meta |
 |---|---|---:|---:|
-| Tasa de identificación | Registros con empleador identificable | 97,96 % | > 98 % |
+| Tasa de identificación | Registros con empleador identificable | 96,19 % | > 98 % |
 | Cobertura sectorial | Registros con CIIU asignado | 51,47 % | > 90 % |
 | Tasa de consolidación | 1 − (empleadores únicos / registros) | 35,4 % | Estable ±3 pp |
 | Confianza automática | Registros en banda ≥ 85 | 9,4 % | > 60 % |
@@ -486,7 +486,7 @@ es el tipo de riesgo que sorprende a los comités.
 | Caso | Volumen | Tratamiento |
 |---|---:|---|
 | Nombre truncado en el tope del campo | 20.532 | Regla de prefijo con distancia asimétrica; penalización en confianza si no hay variante completa |
-| Direcciones en lugar de empleador | 1.868 | `No identificable - Direcciones`. Token fuerte de vía basta; los débiles necesitan respaldo. Tres guardas evitan confundir negocio con inmueble: sufijo societario, orden de aparición y el giro «Casa de X» (D10) |
+| Direcciones en lugar de empleador | 1.841 | `No identificable - Direcciones`. Token fuerte de vía basta; los débiles necesitan respaldo. Tres guardas evitan confundir negocio con inmueble: sufijo societario, orden de aparición y el giro «Casa de X» (D10) |
 | Situación laboral, no empleador | 3.630 | `AMA DE CASA`, `JUBILADO`, `DESEMPLEADO` → categoría propia |
 | Anotaciones del sistema de originación | 899 | `CLIENTE FALLECIDO`, `MENOR DEPENDIENTE`. **No estaban previstos en el enunciado**; se descubrieron al revisar los clústeres más grandes |
 | Persona natural como empleador | 452 | Empleador válido en Panamá; se marca aparte para no contaminar el maestro corporativo como sociedad |

@@ -38,7 +38,7 @@ import sector
 # errores de digitación que la coincidencia literal no atrapa.
 UMBRAL_RECLASIFICACION = 88.0
 
-TIPOS_EMPLEADOR = {'EMPRESA', 'INDEPENDIENTE_CON_ACTIVIDAD', 'PERSONA_NATURAL'}
+TIPOS_EMPLEADOR = {'EMPRESA', 'PERSONA_NATURAL'}
 
 ETIQUETA_POR_TIPO = {
     'DIRECCION': reglas.SECTOR_DIRECCION,

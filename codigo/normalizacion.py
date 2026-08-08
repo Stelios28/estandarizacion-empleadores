@@ -185,6 +185,9 @@ def clasificar_tipo(texto: str, tokens: list[str],
         return 'VACIO', 'solo caracteres de relleno'
     if texto in reglas.MARCADORES_NULO:
         return 'VACIO', 'marcador de nulo explícito: %s' % texto
+    motivo = reglas.es_inclasificable(texto)
+    if motivo:
+        return 'VACIO', motivo
 
     # 2. Anotación operativa del sistema, no un empleador
     marca = _frase_en(texto, reglas.MARCADORES_ANOTACION)
@@ -197,13 +200,20 @@ def clasificar_tipo(texto: str, tokens: list[str],
         return 'INACTIVO', 'situación laboral declarada: %s' % (marca or 'token')
 
     # 4. Trabajador por cuenta propia
-    marca = _frase_en(texto, reglas.MARCADORES_INDEPENDIENTE)
+    # El marcador puede venir acompañado (`INDEPENDIENTE AGRIMENSURA`), así que no
+    # basta la coincidencia de frase: también se busca como token suelto.
+    marca = (_frase_en(texto, reglas.MARCADORES_INDEPENDIENTE)
+             or next((m for m in sorted(reglas.MARCADORES_INDEPENDIENTE)
+                      if ' ' not in m and m in conjunto), None))
     if marca:
-        # "INDEPENDIENTE REFRIGERACION" sí aporta actividad: no es un residual puro.
+        # Todo lo que se declara independiente se agrupa como independiente: no es
+        # un empleador corporativo y no entra al maestro ni a la validación externa
+        # (D13). La actividad, cuando el texto la trae —`INDEPENDIENTE
+        # AGRIMENSURA`—, no se pierde: la fase 12 la usa para asignar sector.
         resto = [t for t in tokens if t not in marca.split()]
         if not resto:
             return 'INDEPENDIENTE', 'declarado independiente sin actividad'
-        return 'INDEPENDIENTE_CON_ACTIVIDAD', 'independiente con actividad: %s' % ' '.join(resto)
+        return 'INDEPENDIENTE', 'independiente con actividad declarada: %s' % ' '.join(resto)
 
     # 5. Dirección. Un token fuerte basta; los débiles necesitan respaldo.
     #

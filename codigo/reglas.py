@@ -326,6 +326,29 @@ MARCADORES_NULO: set[str] = {
 
 _RX_SOLO_RUIDO = re.compile(r'^[X\-\.\_\*0]{1,}$')
 
+
+def es_inclasificable(texto: str) -> str:
+    """
+    Motivo por el que el registro no puede identificar a ningún empleador, o ''.
+
+    Filtro deliberadamente **estrecho**: solo cadenas donde no hay nada que buscar,
+    ni para una regla ni para una búsqueda web. Su valor no es el ahorro —son ~500
+    clústeres— sino no pagar por preguntar «¿a qué se dedica 00582129864593?».
+
+    NO se filtra por longitud. Se midió: cortar en 3 caracteres perdería `3M`, `EY`,
+    `ACP`, `MSC`, `SAP`, `HP`, `IBM`, `DHL`, `UPS`, `KFC`, `PWC` y `TVN`; cortar en
+    7 perdería además `NESTLE`, `HAWORTH` y `CENAMEP`. El largo mide la longitud
+    del nombre, no si el nombre existe.
+    """
+    plano = texto.replace(' ', '')
+    if not plano:
+        return ''
+    if plano.isdigit():
+        return 'el registro es solo dígitos: no nombra a nadie'
+    if len(plano) >= 2 and len(set(plano)) == 1:
+        return 'un solo carácter repetido: relleno de captura'
+    return ''
+
 # Nombres propios frecuentes en Panamá. Se usan solo para señalar que un registro
 # probablemente es una persona natural, nunca para descartarlo: en Panamá una
 # persona natural sí puede ser el empleador.
@@ -730,6 +753,195 @@ GAZETTEER: dict[str, tuple[str, str, str]] = {
     'TRIBUNAL ELECTORAL': ('Tribunal Electoral', 'O', '84'),
     'IDAAN': ('Instituto de Acueductos y Alcantarillados Nacionales', 'E', '36'),
     'ORGANO JUDICIAL': ('Órgano Judicial', 'O', '84'),
+
+    # ----------------------------------------------------------------------
+    # Diccionario de empleadores ancla de Panamá (D13)
+    # ----------------------------------------------------------------------
+    # Fuente: investigación aportada por negocio, apoyada en la planilla del
+    # sector público de la Contraloría a diciembre de 2025, reguladores
+    # sectoriales y Merco Empresas Panamá 2025.
+    #
+    # Criterio: **actividad del lugar de trabajo, no propiedad**. Es la regla
+    # del INEC (CINU Rev. 4.1) y de Naciones Unidas: el estatus legal de la
+    # entidad no determina por sí mismo su clasificación. Por eso un banco
+    # estatal va a financiero, una universidad pública a enseñanza, MiBus a
+    # transporte y la Lotería a juegos de azar. Solo ministerios, tribunales,
+    # Asamblea, policía y reguladores son administración pública.
+
+    # --- Estado: administración pública propiamente dicha ------------------
+    'PROCURADURIA GENERAL NACION': ('Procuraduría General de la Nación', 'O', '84'),
+    'PROCURADURIA GENERAL': ('Procuraduría General de la Nación', 'O', '84'),
+    'ASAMBLEA NACIONAL': ('Asamblea Nacional', 'O', '84'),
+    'CONTRALORIA GENERAL': ('Contraloría General de la República', 'O', '84'),
+    'MINISTERIO DESARROLLO AGROPECUARIO': ('Ministerio de Desarrollo Agropecuario', 'O', '84'),
+    'MINISTERIO COMERCIO INDUSTRIAS': ('Ministerio de Comercio e Industrias', 'O', '84'),
+    'MINISTERIO TRABAJO DESARROLLO LABORAL': ('Ministerio de Trabajo y Desarrollo Laboral', 'O', '84'),
+    'MINISTERIO VIVIENDA': ('Ministerio de Vivienda y Ordenamiento Territorial', 'O', '84'),
+    'MINISTERIO AMBIENTE': ('Ministerio de Ambiente', 'O', '84'),
+    'MINISTERIO CULTURA': ('Ministerio de Cultura', 'O', '84'),
+    'AUTORIDAD MARITIMA PANAMA': ('Autoridad Marítima de Panamá', 'O', '84'),
+    'AUTORIDAD NACIONAL ADUANAS': ('Autoridad Nacional de Aduanas', 'O', '84'),
+    'AUTORIDAD TRANSITO TRANSPORTE': ('Autoridad del Tránsito y Transporte Terrestre', 'O', '84'),
+    'SUPERINTENDENCIA BANCOS': ('Superintendencia de Bancos de Panamá', 'O', '84'),
+    'SUPERINTENDENCIA MERCADO VALORES': ('Superintendencia del Mercado de Valores', 'O', '84'),
+    'SUPERINTENDENCIA SEGUROS': ('Superintendencia de Seguros y Reaseguros', 'O', '84'),
+    'AUTORIDAD NACIONAL SERVICIOS PUBLICOS': ('Autoridad Nacional de los Servicios Públicos', 'O', '84'),
+    'DIRECCION GENERAL INGRESOS': ('Dirección General de Ingresos', 'O', '84'),
+    'DEFENSORIA PUEBLO': ('Defensoría del Pueblo', 'O', '84'),
+    'AUTORIDAD TURISMO PANAMA': ('Autoridad de Turismo de Panamá', 'O', '84'),
+
+    # --- Estado, pero clasificado por su actividad -------------------------
+    'MIBUS': ('MiBus - Transporte Masivo de Panamá, S.A.', 'H', '49'),
+    'TRANSPORTE MASIVO PANAMA': ('MiBus - Transporte Masivo de Panamá, S.A.', 'H', '49'),
+    'METRO PANAMA': ('Metro de Panamá, S.A.', 'H', '49'),
+    'BANCO NACIONAL PANAMA': ('Banco Nacional de Panamá', 'K', '64'),
+    'CAJA AHORROS': ('Caja de Ahorros', 'K', '64'),
+    'ETESA': ('Empresa de Transmisión Eléctrica, S.A.', 'D', '35'),
+    'EMPRESA TRANSMISION ELECTRICA': ('Empresa de Transmisión Eléctrica, S.A.', 'D', '35'),
+    'AUTORIDAD ASEO URBANO DOMICILIARIO': ('Autoridad de Aseo Urbano y Domiciliario', 'E', '38'),
+    'AAUD': ('Autoridad de Aseo Urbano y Domiciliario', 'E', '38'),
+    'TOCUMEN': ('Aeropuerto Internacional de Tocumen, S.A.', 'H', '52'),
+    'INSTITUTO CONMEMORATIVO GORGAS': ('Instituto Conmemorativo Gorgas', 'M', '72'),
+    'SERTV': ('Sistema Estatal de Radio y Televisión', 'J', '60'),
+    'UNIVERSIDAD AUTONOMA CHIRIQUI': ('Universidad Autónoma de Chiriquí', 'P', '85'),
+    'UNACHI': ('Universidad Autónoma de Chiriquí', 'P', '85'),
+    'UDELAS': ('Universidad Especializada de las Américas', 'P', '85'),
+    'UNIVERSIDAD ESPECIALIZADA AMERICAS': ('Universidad Especializada de las Américas', 'P', '85'),
+    'UNIVERSIDAD MARITIMA INTERNACIONAL': ('Universidad Marítima Internacional de Panamá', 'P', '85'),
+    'IPHE': ('Instituto Panameño de Habilitación Especial', 'P', '85'),
+    'INSTITUTO PANAMENO HABILITACION ESPECIAL': ('Instituto Panameño de Habilitación Especial', 'P', '85'),
+    'UNIVERSIDAD LATINA': ('Universidad Latina de Panamá', 'P', '85'),
+
+    # --- Financiero --------------------------------------------------------
+    'BANCO GENERAL': ('Banco General, S.A.', 'K', '64'),
+    'BANISTMO': ('Banistmo, S.A.', 'K', '64'),
+    'BAC INTERNATIONAL BANK': ('BAC International Bank, Inc.', 'K', '64'),
+    'GLOBAL BANK': ('Global Bank Corporation', 'K', '64'),
+    'MULTIBANK': ('Multibank, Inc.', 'K', '64'),
+    'BANCO ALIADO': ('Banco Aliado, S.A.', 'K', '64'),
+    'CREDICORP BANK': ('Credicorp Bank, S.A.', 'K', '64'),
+    'TELERED': ('Telered, S.A.', 'K', '66'),
+    'LATINEX': ('Latinex Holdings, Inc.', 'K', '66'),
+    'LATINCLEAR': ('Central Latinoamericana de Valores', 'K', '66'),
+    'ASSA COMPANIA SEGUROS': ('ASSA Compañía de Seguros, S.A.', 'K', '65'),
+    'INTERNACIONAL SEGUROS': ('Internacional de Seguros, S.A.', 'K', '65'),
+    'MAPFRE': ('MAPFRE Panamá, S.A.', 'K', '65'),
+    'PAN AMERICAN LIFE': ('Pan-American Life Insurance de Panamá', 'K', '65'),
+
+    # --- Comercio ----------------------------------------------------------
+    'GRUPO REY': ('Grupo Rey, S.A.', 'G', '47'),
+    'SUPERMERCADO REY': ('Supermercados Rey', 'G', '47'),
+    'SUPERMERCADOS REY': ('Supermercados Rey', 'G', '47'),
+    'RIBA SMITH': ('Supermercados Riba Smith, S.A.', 'G', '47'),
+    'FARMACIAS ARROCHA': ('Farmacias Arrocha', 'G', '47'),
+    'ARROCHA': ('Farmacias Arrocha', 'G', '47'),
+    'NOVEY': ('Do It Center - Novey', 'G', '47'),
+    'PANAFOTO': ('Panafoto, S.A.', 'G', '47'),
+    'FELIX MADURO': ('Félix B. Maduro, S.A.', 'G', '47'),
+    'MR PRECIO': ('Mr. Precio', 'G', '47'),
+    'MACHETAZO': ('El Machetazo', 'G', '47'),
+    'DICARINA': ('Dicarina, S.A.', 'G', '46'),
+    'MAYS ZONA LIBRE': ('Mays Zona Libre, S.A.', 'G', '46'),
+    'RICARDO PEREZ': ('Ricardo Pérez, S.A.', 'G', '45'),
+    'GRUPO FELIPE RODRIGUEZ': ('Grupo Felipe Rodríguez', 'G', '45'),
+
+    # --- Manufactura y alimentos -------------------------------------------
+    'CERVECERIA NACIONAL': ('Cervecería Nacional, S.A.', 'C', '11'),
+    'NESTLE': ('Nestlé Panamá, S.A.', 'C', '10'),
+    'EMPRESA PANAMENA ALIMENTOS': ('Empresa Panameña de Alimentos', 'C', '10'),
+    'GRUPO MELO': ('Grupo Melo, S.A.', 'C', '10'),
+    'EMPRESAS MELO': ('Empresas Melo, S.A.', 'C', '10'),
+    'CEMENTOS ARGOS': ('Cementos Argos Panamá', 'C', '23'),
+    'CEMEX PANAMA': ('Cemex Panamá, S.A.', 'C', '23'),
+    'GRUPO ESTRELLA': ('Grupo Estrella Azul', 'C', '23'),
+    'FORMETAL': ('Formetal, S.A.', 'C', '25'),
+    'GRUPO HOPSA': ('Grupo Hopsa', 'C', '25'),
+    'PRODUCTOS QUIMICOS PANAMERICANOS': ('Productos Químicos Panamericanos, S.A.', 'C', '20'),
+    'CONFECCIONES DICAR': ('Confecciones Dicar, S.A.', 'C', '13'),
+    'DECOLOSAL': ('Decolosal, S.A.', 'C', '31'),
+    'EMPRESAS CARBONE': ('Empresas Carbone, S.A.', 'C', '32'),
+
+    # --- Servicios a empresas, seguridad y facilities ----------------------
+    'FOUNDEVER': ('Foundever Panamá', 'N', '82'),
+    'ALORICA': ('Alorica Panamá', 'N', '82'),
+    'EULEN': ('Grupo Eulen Panamá, S.A.', 'N', '81'),
+    'PROSEGUR': ('Prosegur Panamá, S.A.', 'N', '80'),
+    'MANPOWER': ('ManpowerGroup Panamá', 'N', '78'),
+    'MANPOWERGROUP': ('ManpowerGroup Panamá', 'N', '78'),
+    'COSUSA': ('Cosusa, S.A.', 'N', '78'),
+    'BUDGET': ('Budget Rent a Car Panamá', 'N', '77'),
+    'AVIS': ('Avis Panamá', 'N', '77'),
+    'HERTZ': ('Hertz Panamá', 'N', '77'),
+    'AVENTURAS 2000': ('Aventuras 2000, S.A.', 'N', '79'),
+    'GRAY LINE': ('Gray Line Panamá', 'N', '79'),
+
+    # --- Profesionales -----------------------------------------------------
+    'DELOITTE': ('Deloitte Panamá', 'M', '70'),
+    'MORGAN MORGAN': ('Morgan & Morgan', 'M', '69'),
+    'KANTAR MERCAPLAN': ('Kantar Mercaplan', 'M', '73'),
+    'DICHTER NEIRA': ('Dichter & Neira', 'M', '73'),
+    'TYPSA': ('Typsa Panamá', 'M', '71'),
+    'LOUIS BERGER': ('WSP - Louis Berger Panamá', 'M', '71'),
+
+    # --- Tecnología y telecomunicaciones -----------------------------------
+    'GBM': ('GBM de Panamá, S.A.', 'J', '62'),
+    'MINSAIT': ('Minsait - Indra Panamá', 'J', '62'),
+    'DELL': ('Dell Technologies Panamá', 'J', '62'),
+    'TIGO': ('Tigo Panamá, S.A.', 'J', '61'),
+    'TVN MEDIA': ('TVN Media, S.A.', 'J', '60'),
+
+    # --- Transporte, logística y puertos -----------------------------------
+    'PSA PANAMA INTERNATIONAL TERMINAL': ('PSA Panama International Terminal, S.A.', 'H', '52'),
+    'PANAMA PORTS': ('Panama Ports Company, S.A.', 'H', '52'),
+    'COLON CONTAINER TERMINAL': ('Colon Container Terminal, S.A.', 'H', '52'),
+
+    # --- Salud, alojamiento y construcción ---------------------------------
+    'HOSPITAL NACIONAL': ('Hospital Nacional, S.A.', 'Q', '86'),
+    'HOSPITAL SAN FERNANDO': ('Hospital San Fernando, S.A.', 'Q', '86'),
+    'PACIFICA SALUD': ('Pacífica Salud Hospital Punta Pacífica', 'Q', '86'),
+    'HOSPITAL PUNTA PACIFICA': ('Pacífica Salud Hospital Punta Pacífica', 'Q', '86'),
+    'MARRIOTT': ('Marriott Panamá', 'I', '55'),
+    'SHERATON': ('Sheraton Grand Panamá', 'I', '55'),
+    'RIU PLAZA': ('Riu Plaza Panamá', 'I', '55'),
+    'GRUPO LOS PUEBLOS': ('Grupo Los Pueblos - GLP Properties', 'L', '68'),
+    'GLP PROPERTIES': ('Grupo Los Pueblos - GLP Properties', 'L', '68'),
+    'CONSTRUCTORA MECO': ('Constructora Meco, S.A.', 'F', '41'),
+    'CONSTRUCTORA URBANA': ('Constructora Urbana, S.A.', 'F', '41'),
+    'ARCOS DORADOS': ("Arcos Dorados - McDonald's Panamá", 'I', '56'),
+    'MCDONALDS': ("McDonald's Panamá", 'I', '56'),
+    'GRUPO MAITO': ('Grupo Maito', 'I', '56'),
+
+    # --- Energía, minería, agro y organismos internacionales ---------------
+    'AES PANAMA': ('AES Panamá, S.R.L.', 'D', '35'),
+    'EDEMET': ('Edemet - Naturgy Panamá', 'D', '35'),
+    'ELEKTRA NORESTE': ('Elektra Noreste, S.A.', 'D', '35'),
+    'EDECHI': ('Edechi - Naturgy Panamá', 'D', '35'),
+    'MINERA PANAMA': ('Minera Panamá, S.A. - Cobre Panamá', 'B', '07'),
+    'COBRE PANAMA': ('Minera Panamá, S.A. - Cobre Panamá', 'B', '07'),
+    'OPEN BLUE': ('Open Blue Sea Farms Panamá', 'A', '03'),
+    'FUTURO FORESTAL': ('Futuro Forestal, S.A.', 'A', '02'),
+    'CAMARA COMERCIO INDUSTRIAS AGRICULTURA': ('Cámara de Comercio, Industrias y Agricultura de Panamá', 'S', '94'),
+    'CAPAC': ('Cámara Panameña de la Construcción', 'S', '94'),
+    'PNUD': ('Programa de las Naciones Unidas para el Desarrollo', 'U', '99'),
+    'UNICEF': ('UNICEF Oficina Regional para América Latina y el Caribe', 'U', '99'),
+    'UNOPS': ('UNOPS Panamá', 'U', '99'),
+    'NACIONES UNIDAS': ('Organización de las Naciones Unidas', 'U', '99'),
+
+    # --- Formas ya expandidas por ABREVIATURAS -----------------------------
+    # `expandir_tokens` corre antes de consultar el gazetteer, así que las siglas
+    # que están en ABREVIATURAS llegan aquí desplegadas. Sin estas claves, `IDAAN`
+    # se convertía en `INSTITUTO DE ACUEDUCTOS...` y caía en Enseñanza por el token
+    # `INSTITUTO`.
+    'INSTITUTO ACUEDUCTOS ALCANTARILLADOS NACIONALES': (
+        'Instituto de Acueductos y Alcantarillados Nacionales', 'E', '36'),
+    'AUTORIDAD CANAL PANAMA': ('Autoridad del Canal de Panamá', 'H', '52'),
+    'AUTORIDAD MARITIMA PANAMA': ('Autoridad Marítima de Panamá', 'O', '84'),
+    'AUTORIDAD TURISMO PANAMA': ('Autoridad de Turismo de Panamá', 'O', '84'),
+    'INSTITUTO FORMACION APROVECHAMIENTO RECURSOS HUMANOS': (
+        'Instituto para la Formación y Aprovechamiento de Recursos Humanos', 'O', '84'),
+    'SERVICIO NACIONAL FRONTERAS': ('Servicio Nacional de Fronteras', 'O', '84'),
+    'SERVICIO NACIONAL AERONAVAL': ('Servicio Nacional Aeronaval', 'O', '84'),
+    'SECRETARIA NACIONAL DISCAPACIDAD': ('Secretaría Nacional de Discapacidad', 'O', '84'),
 }
 
 

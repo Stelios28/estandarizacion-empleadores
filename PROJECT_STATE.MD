@@ -7,11 +7,12 @@ con score de confianza y explicación por registro.
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo cinco correcciones (D8-D12). Solo queda la fase 7 (validación externa), que está
+produjo seis correcciones (D8-D13). Solo queda la fase 7 (validación externa), que está
 construida y probada en su ruta de estimación pero no ejecutada: requiere credencial.
 
 ## Misión activa
-Ejecutar la fase 7 sobre los 95.922 clústeres sin sector.
+Agotar los recursos determinísticos antes de gastar en fase 7 (instrucción de negocio).
+Cola actual: 93.501 clústeres; 22.801 de ellos aparecen 2+ veces.
 Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática > 50 %.
 
 ## Resultados medidos
@@ -19,10 +20,10 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 | Métrica | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 316.408 · 97,96 % |
-| Empleadores únicos (maestro) | 204.393 |
+| Empleadores identificados | 310.684 · 96,19 % |
+| Empleadores únicos (maestro) | 200.456 |
 | Consolidación de variantes | 35,4 % |
-| Con sector CIIU | 177.955 · 56,24 % de los empleadores |
+| Con sector CIIU | 178.979 · 57,61 % de los empleadores |
 | Confianza promedio / mediana | 49,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
@@ -42,8 +43,13 @@ verificación individual 141.917 (43,9 %).
 - **D10** — Tres guardas negocio/inmueble: sufijo societario, orden de aparición, giro «Casa de X»
 - **D11** — Consulta aproximada al catálogo: morfología + errata, con cuatro guardas
 - **D12** — `PH` = propiedad horizontal: persona jurídica con planilla, no un inmueble
+- **D13** — Diccionario de 185 empleadores ancla de Panamá; el sector lo decide la
+  **actividad del lugar de trabajo, no la propiedad** (criterio INEC / Naciones Unidas)
 
 ## Pendientes prioritarios
+- **Alta** — Decidido por negocio: los clústeres de una sola aparición no aportan al
+  análisis de concentración. La fase 7 debe correr sobre los de 2+ registros (22.801
+  clústeres, 63.585 registros): ~USD 7 con Haiku 4.5
 - **Bloqueante** — API key de Anthropic para ejecutar la fase 7 (`ANTHROPIC_API_KEY`)
 - **Media** — Decidir modelo de fase 7: Opus 5 (~USD 140) o Haiku 4.5 (~USD 28); con Batches API, la mitad
 - **Baja** — Ampliar `reglas.py` con más vocabulario local de Panamá aportado por negocio
@@ -55,7 +61,7 @@ verificación individual 141.917 (43,9 %).
 - **R2 Sin frecuencias** — mitigado: el canónico se elige por calidad ortográfica medida sobre el corpus
 - **R3 Truncamiento** — mitigado: 20.532 registros tratados con regla de prefijo asimétrica
 - **R7 Costo fase 7** — acotado: caché persistente, lotes de 40, presupuesto por corrida, prioridad por volumen
-- **R8 Cobertura sectorial 56,2 %** — abierto. Se cierra solo con la fase 7
+- **R8 Cobertura sectorial 57,6 %** — abierto. Se cierra solo con la fase 7
 - **R9 Etiquetado de estados** — cerrado con D8
 - **R10 Vocabulario de negocio** — abierto por diseño. D12 mostró que hay reglas de dominio
   que no se infieren del corpus; se cierran preguntando, y `reglas.py` está separado del
@@ -70,18 +76,25 @@ verificación individual 141.917 (43,9 %).
 - `Documentacion/Mantenimiento/` — perfilamiento y decisiones
 
 ## Última validación
-- Pipeline completo sobre 323.001 registros — 97,96 % identificación, 204.393 empleadores únicos, 56,2 % cobertura sectorial — 2026-08-08
+- Pipeline completo sobre 323.001 registros — 96,19 % identificación, 200.456 empleadores únicos, 57,6 % cobertura sectorial — 2026-08-08
+- Diccionario ancla: 275 anclas activas sobre 9.308 registros — 2026-08-08
 - 25 casos de tipificación dirección/negocio, revisados uno a uno — 25/25 — 2026-08-07
 - 9 casos de propiedad horizontal (entidad vs domicilio), revisados uno a uno — 9/9 — 2026-08-07
 - 5 casos de control del matching aproximado (falsos positivos esperados), rechazados — 5/5 — 2026-08-07
 - Estimación de fase 7 contra la API real de precios — USD 149 / USD 75 por lotes — 2026-08-07
 
 ## Lección transversal del ciclo de revisión
-Las cinco correcciones D8-D12 comparten causa: **dos categorías que comparten vocabulario,
-y un ganador elegido implícitamente.** Ninguna aparecía en las métricas agregadas — todas
-salieron de mirar filas concretas. La inspección manual de la cabeza de la distribución es
-parte del ciclo, no un extra.
+D8-D11 comparten causa: **dos categorías que comparten vocabulario, y un ganador elegido
+implícitamente.** Ninguna aparecía en las métricas agregadas — todas salieron de mirar
+filas concretas.
+
+D12 y D13 son de otra clase y de mayor rendimiento: **conocimiento de dominio que no está
+en el dato.** `PH` como figura jurídica y el criterio actividad-sobre-propiedad no se
+infieren del corpus por mucho que se lo analice. Se aportan. Por eso `reglas.py` está
+separado del motor, y por eso integrar 125 entidades nuevas fue editar un diccionario y no
+rediseñar nada.
 
 ## Próxima mejor acción
-Exportar `ANTHROPIC_API_KEY` y ejecutar `codigo/04_enriquecimiento.py --todo`, luego
-`codigo/05_salida.py` para regenerar los entregables con la cobertura sectorial completa.
+Exportar `ANTHROPIC_API_KEY` y correr la fase 7 acotada a los clústeres de 2+ registros
+(~USD 7 con Haiku 4.5), luego `codigo/05_salida.py`. Antes de eso, seguir agotando reglas
+determinísticas con vocabulario aportado por negocio: es gratis y rinde más.
