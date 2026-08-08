@@ -69,12 +69,28 @@ def clave_gazetteer(tokens: list[str]) -> str:
     return ' '.join(t for t in tokens if t not in reglas.STOPWORDS)
 
 
+# Índice del gazetteer por primer token, con las claves ya partidas. Evita recorrer
+# las 185 entradas en cada consulta y permite exigir límite de palabra.
+_INDICE_GAZETTEER: dict[str, list[tuple[list[str], tuple[str, str, str]]]] = {}
+for _clave, _valor in reglas.GAZETTEER.items():
+    _partes = _clave.split()
+    _INDICE_GAZETTEER.setdefault(_partes[0], []).append((_partes, _valor))
+# Primero las claves largas: `BANCO GENERAL` debe ganarle a `BANCO` si ambas están.
+for _lista in _INDICE_GAZETTEER.values():
+    _lista.sort(key=lambda par: -len(par[0]))
+
+
 def buscar_gazetteer(tokens: list[str]) -> tuple[str, str, str] | None:
     """
     Coincidencia con el gazetteer de grandes empleadores.
 
-    Se acepta si la clave del gazetteer está contenida en el nombre, no solo si es
-    igual: `AUTORIDAD DEL CANAL DE PANAMA ESCLUSAS` sigue siendo la ACP.
+    Se acepta si la clave aparece como **secuencia de tokens completos** dentro del
+    nombre: `AUTORIDAD DEL CANAL DE PANAMA ESCLUSAS` sigue siendo la ACP.
+
+    La comparación es por token y no por subcadena de caracteres, que era el
+    comportamiento anterior y producía falsos positivos silenciosos: `AVIS` casaba
+    dentro de `BELLAVISTA`, `DAVIS` y `BUENAVISTA`; `TIGO` dentro de `VERTIGO`;
+    `GBM` dentro de `LGBM`. 128 registros de una sola clave (D15).
     """
     consulta = clave_gazetteer(tokens)
     if not consulta:
@@ -82,9 +98,12 @@ def buscar_gazetteer(tokens: list[str]) -> tuple[str, str, str] | None:
     directo = reglas.GAZETTEER.get(consulta)
     if directo:
         return directo
-    for clave, valor in reglas.GAZETTEER.items():
-        if clave in consulta:
-            return valor
+
+    partes = consulta.split()
+    for i, token in enumerate(partes):
+        for clave, valor in _INDICE_GAZETTEER.get(token, ()):
+            if partes[i:i + len(clave)] == clave:
+                return valor
     return None
 
 

@@ -221,6 +221,116 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D16 — Vocabulario derivado del conteo de frecuencias sobre lo no clasificado
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** propuesta de Javier — separar todo en palabras, contar las más frecuentes y
+  mirar cuáles permiten agrupar más. Se aplicó **solo sobre los clústeres sin sector** y
+  ponderando por registros, que es lo que convierte un conteo en una lista de prioridades.
+
+### Por qué esta vista funciona
+
+Contar palabras sobre el corpus entero devuelve `PANAMA`, `SA`, `SERVICIOS` — nada
+accionable. Contarlas **sobre lo que quedó sin clasificar** devuelve exactamente los huecos
+del catálogo, ordenados por lo que cuesta no tenerlos.
+
+### Reglas admitidas
+
+| Patrón | Sector | Registros | Por qué es inequívoco |
+|---|---|---:|---|
+| `PRIMER CICLO`, `CENTRO BASICO GENERAL`, `PREMEDIA` | Enseñanza | ~500 | Son niveles del sistema educativo panameño |
+| `ARMY`, `NAVY`, `AIR FORCE`, `TREASURY OF THE`, `PANAMA CANAL COMMISSION` | Administración pública | ~300 | Herencia de la antigua Zona del Canal, muy presente en la cartera |
+| `AIR LINE`, `AIR LINES` | Transporte aéreo | 265 | El catálogo tenía `AIRLINES` junto, no separado |
+| `Y ASOCIADOS`, `ASSOCIATES` | Jurídicas y contabilidad (peso 4) | 1.955 | Giro de las firmas profesionales panameñas |
+| `SOLUCIONES` | Programación y consultoría (peso 4) | 510 | Estaba `SOLUTIONS` en inglés y no la forma española |
+| `MANAGEMENT` | Consultoría de gestión (peso 5) | 548 | — |
+| `CAR WASH`, `AUTOLAVADO` | Reparación de vehículos | ~120 | — |
+| `RENT A CAR`, `CAR RENTAL` | Alquiler y arrendamiento | ~90 | — |
+| `PTY` → `PANAMA` (abreviatura) | — | 449 | `LOS ESPECIALISTAS PTY` y `... PANAMA` caían en clústeres distintos |
+
+### Palabras frecuentes que se dejaron fuera a propósito
+
+`PANAMA` (11.764 registros), `CENTRO` (1.475), `CASA` (1.385), `FAMILIA` (609),
+`MUNDO`, `ESTACION`, `STAR`, `HERMANOS`, `PRODUCTOS`, `DESARROLLO`.
+
+Son las más frecuentes de todas y **ninguna dice a qué se dedica la empresa**. Clasificarlas
+subiría la cobertura varios puntos y metería miles de errores silenciosos. Es D6 aplicado
+donde más tienta romperlo: justo en la cabeza de la lista.
+
+### Efecto medido
+
+Cobertura 57,63 % → **58,93 %**. Cola de fase 7: 93.501 → **91.014** clústeres.
+
+**Lección:** el conteo de frecuencias sobre el residuo es la herramienta más barata de todo
+el proyecto para encontrar trabajo pendiente. Debería ser parte del ciclo de mantenimiento,
+no un ejercicio único: cada vez que entra una carga nueva, las palabras que encabezan el
+residuo son la lista de tareas.
+
+---
+
+## D15 — Órganos del Estado y coincidencia por token en el gazetteer
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** al mover el IPAT a administración pública (pendiente R11 de D14) se buscaron
+  sistemáticamente todos los organismos públicos clasificados fuera de administración
+  pública. Aparecieron dos familias de defectos, una de datos y una de código.
+
+### Defecto 1 — El regulador clasificado en el sector que regula
+
+| Registro | Estaba en | Causa |
+|---|---|---|
+| `SUPERINTENDENCIA BANCARIA` | Intermediación financiera | token `BANCARIA` |
+| `COMISION NACIONAL DE VALORES` | Comercio al por menor | token `VALORES` |
+| `JUZGADO PRIMERO DE CIRCUITO CIVIL` | Arquitectura e ingeniería | token `CIVIL` |
+| `COMISION NACIONAL DEL MEDIO AMBIENTE` | Programación y transmisión | token `MEDIO` |
+| `DIRECCION NACIONAL DE SEGURIDAD` | Seguridad privada | token `SEGURIDAD` |
+| `CONTRALORIA ESCUELA IPT` | Enseñanza | el auditor está destacado en la escuela |
+| `CAJA DE SEGURO SCOIAL` | Seguros y pensiones | la errata en `SOCIAL` impedía el gazetteer |
+
+Es **D13 leído al revés**: si la Autoridad Marítima no es transporte marítimo porque lo
+regula, la Superintendencia de Bancos tampoco es intermediación financiera. Se añadió una
+regla de frase para los encabezados inequívocos de órgano estatal, que gana al token de
+actividad.
+
+### Defecto 2 — El gazetteer comparaba subcadenas, no tokens
+
+`buscar_gazetteer` aceptaba la coincidencia con `clave in consulta`, comparación de
+**caracteres**. Con claves cortas eso produce falsos positivos invisibles:
+
+```
+AVIS  dentro de  BELLAVISTA, DAVIS, CAVIS, BUENAVISTA   -> 128 registros
+TIGO  dentro de  VERTIGO                                ->  86 registros
+GBM   dentro de  LGBM                                   ->  38 registros
+```
+
+`CORPORACION BELLAVISTA DE FINANZAS, S.A.` quedaba clasificada como alquiler de vehículos.
+Ahora la comparación es por **secuencia de tokens completos**, con índice por primer token
+y preferencia por la clave más larga.
+
+**Este defecto existía desde el principio**, pero era inofensivo mientras el gazetteer solo
+tenía claves largas. Lo activó D13 al añadir siglas de tres y cuatro letras. Un cambio de
+datos despertó un defecto de código que llevaba semanas dormido.
+
+### Defecto 3 — Claves de gazetteer que son apellidos
+
+`ARROCHA` mandaba `Clínica Dental Arrocha` y `Hospital Dionisio Arrocha` a comercio
+minorista; `RICARDO PEREZ` es además un nombre de persona corriente en Panamá. Se
+retiraron como claves sueltas y solo entran acompañadas del giro: `FARMACIAS ARROCHA`,
+`DROGUERIAS ARROCHA`, `RICARDO PEREZ TOYOTA`.
+
+Es la misma regla de admisión de D7, ahora aplicada al gazetteer: **una clave corta solo
+entra si no puede ser fragmento o apellido de otro nombre.**
+
+### Pendiente menor anotado
+
+`ASOC PADRES DE FAMILIA CEBG` cae en Enseñanza porque la frase de la escuela es más larga
+que la de la asociación y `por_frase` prefiere la más específica por longitud. Son 11
+registros; no se fuerza.
+
+---
+
 ## D14 — Auditoría de tokens genéricos que se comportaban como específicos
 
 - **Fecha:** 2026-08-08

@@ -121,7 +121,7 @@ ABREVIATURAS: dict[str, str] = {
     'HOSP': 'HOSPITAL', 'CLIN': 'CLINICA', 'LAB': 'LABORATORIO',
     'RESTAUR': 'RESTAURANTE', 'REST': 'RESTAURANTE',
     'SUPERM': 'SUPERMERCADO', 'MINISUPER': 'MINI SUPER',
-    'PMA': 'PANAMA',
+    'PMA': 'PANAMA', 'PTY': 'PANAMA',
     'ZL': 'ZONA LIBRE', 'ZLC': 'ZONA LIBRE DE COLON',
 }
 
@@ -500,6 +500,55 @@ _regla('INSTITUTO', 'P', '85', 'Enseñanza', 3)
 _regla('SUPER', 'G', '47', 'Comercio al por menor', 3)
 _regla('GLOBAL', 'N', '82', 'Actividades de apoyo a empresas', 1)
 
+# --- Vocabulario derivado del conteo de frecuencias (D16) ------------------
+# Se contaron las palabras de los clústeres SIN sector, ponderadas por registros.
+# Las que encabezaban la lista y tenían actividad inequívoca entraron aquí. Las
+# que encabezaban pero eran ambiguas —`PANAMA`, `CENTRO`, `CASA`, `FAMILIA`,
+# `MUNDO`, `ESTACION`, `STAR`, `HERMANOS`— se dejaron fuera a propósito (D6).
+
+# Niveles del sistema educativo panameño. `PRIMER CICLO DE PARITA` y
+# `CENTRO BASICO GENERAL BEATRIZ MIRANDA` son escuelas, no otra cosa.
+_regla('PRIMER CICLO|SEGUNDO CICLO|CENTRO BASICO GENERAL|CENTRO EDUCATIVO BASICO|'
+       'PREMEDIA|EDUCACION BASICA GENERAL|TELEBASICA',
+       'P', '85', 'Enseñanza', 9)
+
+# Empleadores del Gobierno de EE. UU.: herencia de la antigua Zona del Canal, muy
+# presente en la cartera panameña. `ARMY ZONA DEL CANAL`, `TREASURY OF THE USA`.
+_regla('ARMY|NAVY|US ARMY|USA ARMY|U S ARMY|AIR FORCE|US NAVY|USA NAVY|U S NAVY|'
+       'ARMY PANAMA|TREASURY OF THE|US GOVERNMENT|US GOVT|USA GOVERNMENT|'
+       'DEPARTMENT OF DEFENSE|SOUTHERN COMMAND|PANAMA CANAL COMMISSION|'
+       'PANAMA CANAL COMISSION|VETERANS ADMINISTRATION',
+       'O', '84', 'Administración pública', 9)
+
+# `AIR LINE` separado no coincidía con el token `AIRLINES`.
+_regla('AIR LINE|AIR LINES|AIRLINE|AEREAS', 'H', '51', 'Transporte aéreo', 8)
+
+# Lavado y cuidado de vehículos.
+_regla('CAR WASH|CARWASH|AUTOLAVADO|LAVA AUTOS|LAVADO DE AUTOS|CAR CARE',
+       'G', '45', 'Comercio y reparación de vehículos', 8)
+
+# Alquiler de vehículos escrito de las formas que aparecen en el corpus.
+_regla('RENT A CAR|RENTA CAR|CAR RENTAL|ALQUILER DE AUTOS|ALQUILER DE VEHICULOS',
+       'N', '77', 'Alquiler y arrendamiento', 8)
+
+# Asociaciones de padres de familia de las escuelas: son asociaciones, no la
+# escuela ni una firma de asociados.
+_regla('ASOCIACION DE PADRES|ASOC DE PADRES|ASOC PADRES|CLUB DE PADRES',
+       'S', '94', 'Actividades de asociaciones', 9)
+
+# `X Y ASOCIADOS` es el giro de las firmas profesionales panameñas —abogados,
+# contadores, consultores—. Peso 4: cualquier token que diga la especialidad
+# concreta (`INGENIERIA`, `ARQUITECTOS`, `CONTADORES`) le gana.
+_regla('ASOCIADOS|ASSOCIATES', 'M', '69',
+       'Actividades jurídicas y de contabilidad', 4)
+
+# Huecos español/inglés del mismo tipo que corrigió D8: el catálogo tenía la
+# forma inglesa y no la española, o al revés.
+_regla('SOLUCIONES', 'J', '62',
+       'Programación informática y consultoría', 4)
+_regla('MANAGEMENT|GERENCIAMIENTO', 'M', '70', 'Consultoría de gestión', 5)
+_regla('BUSINESS', 'N', '82', 'Actividades de apoyo a empresas', 2)
+
 # --- Desambiguación de tokens genéricos (D14) ------------------------------
 # Estas reglas van por frase, y `por_frase` corre antes que `por_token`: es la
 # forma de que un nombre concreto le gane a una palabra suelta.
@@ -522,6 +571,41 @@ _regla('INSTITUTO DE SEGUROS|INSTITUTO DE SEGURIDAD SOCIAL',
        'K', '65', 'Seguros y fondos de pensiones', 9)
 _regla('INSTITUTO ONCOLOGICO|INSTITUTO DE MEDICINA|INSTITUTO NACIONAL DE SALUD',
        'Q', '86', 'Actividades de atención de la salud humana', 9)
+
+# Órganos del Estado que quedaban clasificados en el sector que regulan o al que
+# pertenece el lugar donde está destacado el funcionario (D15). Van por frase,
+# así que le ganan al token de actividad:
+#
+#   SUPERINTENDENCIA BANCARIA        -> era intermediación financiera
+#   COMISION NACIONAL DE VALORES     -> era comercio al por menor
+#   JUZGADO PRIMERO DE CIRCUITO CIVIL-> era arquitectura e ingeniería (por CIVIL)
+#   CONTRALORIA ESCUELA IPT          -> era enseñanza (auditor destacado en la escuela)
+#
+# El empleador es el órgano, no el sitio donde la persona trabaja ni el sector
+# que vigila. Es el mismo criterio de D13 leído al revés: la Autoridad Marítima
+# regula el transporte marítimo, y por eso NO es transporte marítimo.
+_regla('SUPERINTENDENCIA|COMISION NACIONAL|CONSEJO NACIONAL|SECRETARIA NACIONAL|'
+       'DIRECCION NACIONAL|DIRECCION GENERAL|JUZGADO|TRIBUNAL|FISCALIA|'
+       'MINISTERIO PUBLICO|DEFENSORIA|PROCURADURIA|CONTRALORIA|REGISTRO PUBLICO|'
+       'MUNICIPIO DE|ALCALDIA|JUNTA COMUNAL|GOBERNACION DE|CORTE SUPREMA|'
+       'ORGANO EJECUTIVO|ORGANO LEGISLATIVO|PRESIDENCIA DE LA REPUBLICA',
+       'O', '84', 'Administración pública', 9)
+
+# La Caja de Seguro Social llega con muchas erratas en la última palabra
+# (`SCOIAL`, `SOCUUAL`, `SOCILA`) y el gazetteer no las alcanza; el token
+# `SEGURO` la mandaba a la industria aseguradora. La seguridad social
+# obligatoria es administración pública en CIIU.
+_regla('CAJA DE SEGURO', 'O', '84', 'Administración pública', 9)
+
+# El IPAT regula y promueve el turismo: no es un operador turístico (D14, R11).
+_regla('INSTITUTO PANAMENO DE TURISMO|AUTORIDAD DE TURISMO',
+       'O', '84', 'Administración pública', 9)
+
+# Gremios empresariales: asociaciones, no las empresas que agrupan.
+_regla('CONSEJO NACIONAL DE LA EMPRESA PRIVADA|CAMARA DE COMERCIO|'
+       'SINDICATO|GREMIO|COLEGIO DE ABOGADOS|COLEGIO DE MEDICOS|'
+       'ASOCIACION DE PRODUCTORES|CAMARA PANAMENA',
+       'S', '94', 'Actividades de asociaciones', 9)
 
 # `SOCIAL SECURITY` es la agencia de pensiones de EE. UU., no vigilancia privada.
 # Aparecía en «Actividades de seguridad e investigación» por el token SECURITY.
@@ -891,7 +975,9 @@ GAZETTEER: dict[str, tuple[str, str, str]] = {
     'SUPERMERCADOS REY': ('Supermercados Rey', 'G', '47'),
     'RIBA SMITH': ('Supermercados Riba Smith, S.A.', 'G', '47'),
     'FARMACIAS ARROCHA': ('Farmacias Arrocha', 'G', '47'),
-    'ARROCHA': ('Farmacias Arrocha', 'G', '47'),
+    'DROGUERIAS ARROCHA': ('Farmacias Arrocha', 'G', '47'),
+    'RICARDO PEREZ TOYOTA': ('Ricardo Pérez, S.A.', 'G', '45'),
+    'AUTOS RICARDO PEREZ': ('Ricardo Pérez, S.A.', 'G', '45'),
     'NOVEY': ('Do It Center - Novey', 'G', '47'),
     'PANAFOTO': ('Panafoto, S.A.', 'G', '47'),
     'FELIX MADURO': ('Félix B. Maduro, S.A.', 'G', '47'),
@@ -899,7 +985,6 @@ GAZETTEER: dict[str, tuple[str, str, str]] = {
     'MACHETAZO': ('El Machetazo', 'G', '47'),
     'DICARINA': ('Dicarina, S.A.', 'G', '46'),
     'MAYS ZONA LIBRE': ('Mays Zona Libre, S.A.', 'G', '46'),
-    'RICARDO PEREZ': ('Ricardo Pérez, S.A.', 'G', '45'),
     'GRUPO FELIPE RODRIGUEZ': ('Grupo Felipe Rodríguez', 'G', '45'),
 
     # --- Manufactura y alimentos -------------------------------------------

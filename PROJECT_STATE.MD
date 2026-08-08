@@ -7,7 +7,7 @@ con score de confianza y explicación por registro.
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo siete correcciones (D8-D14). Solo queda la fase 7 (validación externa), que está
+produjo nueve correcciones (D8-D16). Solo queda la fase 7 (validación externa), que está
 construida y probada en su ruta de estimación pero no ejecutada: requiere credencial.
 
 ## Misión activa
@@ -21,9 +21,9 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 |---|---:|
 | Registros procesados | 323.001 |
 | Empleadores identificados | 310.684 · 96,19 % |
-| Empleadores únicos (maestro) | 200.456 |
+| Empleadores únicos (maestro) | 200.377 |
 | Consolidación de variantes | 35,4 % |
-| Con sector CIIU | 179.007 · 57,63 % de los empleadores |
+| Con sector CIIU | 183.043 · 58,93 % de los empleadores |
 | Confianza promedio / mediana | 49,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
@@ -47,11 +47,14 @@ verificación individual 141.917 (43,9 %).
   **actividad del lugar de trabajo, no la propiedad** (criterio INEC / Naciones Unidas)
 - **D14** — Auditoría de tokens genéricos con peso de específicos: `INSTITUTO`, `SUPER`,
   `GLOBAL`, `SOCIAL SECURITY`, bancos multilaterales, DHL, «esperando nombramiento»
+- **D15** — Reguladores del Estado a administración pública; gazetteer comparando por
+  token y no por subcadena (`AVIS` casaba dentro de `BELLAVISTA`)
+- **D16** — Vocabulario derivado del conteo de frecuencias sobre el residuo sin sector
 
 ## Pendientes prioritarios
 - **Alta** — Decidido por negocio: los clústeres de una sola aparición no aportan al
-  análisis de concentración. La fase 7 debe correr sobre los de 2+ registros (22.801
-  clústeres, 63.585 registros): ~USD 7 con Haiku 4.5
+  análisis de concentración. La fase 7 debe correr sobre los de 2+ registros (21.990
+  clústeres, 61.116 registros): ~USD 7 con Haiku 4.5
 - **Bloqueante** — API key de Anthropic para ejecutar la fase 7 (`ANTHROPIC_API_KEY`)
 - **Media** — Decidir modelo de fase 7: Opus 5 (~USD 140) o Haiku 4.5 (~USD 28); con Batches API, la mitad
 - **Baja** — Ampliar `reglas.py` con más vocabulario local de Panamá aportado por negocio
@@ -64,8 +67,9 @@ verificación individual 141.917 (43,9 %).
 - **R3 Truncamiento** — mitigado: 20.532 registros tratados con regla de prefijo asimétrica
 - **R7 Costo fase 7** — acotado: caché persistente, lotes de 40, presupuesto por corrida, prioridad por volumen
 - **R8 Cobertura sectorial 57,6 %** — abierto. Se cierra solo con la fase 7
-- **R11 IPAT en agencias de viajes** — abierto y anotado en D14. Es el regulador del
-  turismo, no un operador; por el criterio de D13 debería ir a administración pública
+- **R11 IPAT en agencias de viajes** — cerrado con D15: pasó a administración pública
+- **R12 Asociaciones de padres de familia** — abierto, 11 registros. Caen en Enseñanza
+  porque la frase de la escuela es más larga; no se fuerza por volumen
 - **R9 Etiquetado de estados** — cerrado con D8
 - **R10 Vocabulario de negocio** — abierto por diseño. D12 mostró que hay reglas de dominio
   que no se infieren del corpus; se cierran preguntando, y `reglas.py` está separado del
