@@ -221,6 +221,68 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D21 — Corrección de D20: el archivo de revisión filtraba al revés
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** *«yo no estaba revisando "pendiente validación externa", estaba revisando lo
+  que quedó como no identificable, y leía el campo nombre original»*.
+
+### El error
+
+`revision_sin_sector.xlsx` filtraba `tipo in TIPOS_EMPLEADOR and not seccion_ciiu`: es
+decir, **exactamente el bloque contrario** al que Javier estaba revisando. Le entregué una
+herramienta para un problema que no era el suyo, en la misma iteración en la que escribí
+que había que mirar lo que la persona está mirando.
+
+Sustituido por `salidas/revision_pendiente.xlsx`, que trae **todo lo no resuelto** con una
+columna `bloque` para filtrar:
+
+| Bloque | Filas | Qué es |
+|---|---:|---|
+| Empleador sin sector | 127.188 | Identificado, falta la actividad → fase 7 |
+| Situación laboral | 9.076 | Independiente, jubilado, ama de casa, estudiante |
+| No identificable | 3.013 | Direcciones, cadenas vacías, anotaciones |
+
+Un registro se considera resuelto solo si es un empleador identificado **y** tiene sector.
+Todo lo demás entra al archivo. Ordenado alfabéticamente por `nombre_original`.
+
+### Categorías para las anotaciones del sistema
+
+D20 dio etiqueta a las situaciones laborales pero dejó las anotaciones en el cajón
+genérico. Se completaron: `Cliente fallecido` (559), `Dependiente económico` (195),
+`Menor de edad` (90), `Cuenta cerrada o cancelada`.
+
+**«No identificable - No es un empleador» pasó de 1.260 a 3 registros.**
+
+### Una regresión que yo mismo causé
+
+`MINISUPER PARQUE EL EMPALME` había vuelto a clasificarse como dirección.
+
+La causa: en D14 bajé el peso de `SUPER` de 8 a 3 por el falso positivo `SUPER SERVICE`.
+Pero la guarda de D10 —«manda el token que aparece primero, si es de actividad y pesa 7 o
+más»— dejó de reconocer a `SUPER` como token de actividad, y `PARQUE` volvió a ganar.
+
+`SUPER` vuelve a peso 7. El falso positivo que motivó bajarlo ya lo ataja la frase
+`SUPER SERVICE`, que se evalúa antes que los tokens. Se añadieron además `MINISUPER`,
+`MINISUPERMERCADO` y `SUPERETTE` explícitamente.
+
+**Es literalmente la lección que escribí en D14** —«bajar un peso libera las disputas que
+ese token venía ganando»— y no la apliqué a las guardas de tipificación, solo a las de
+sector. Una regla de peso no vive solo en el clasificador sectorial: otras partes del
+motor la consultan como umbral.
+
+### Estado tras la corrección
+
+| | Antes de D20 | Ahora |
+|---|---:|---:|
+| Categorías distintas para no-empleadores | 2 | **11** |
+| «No identificable - No es un empleador» | 4.346 | **3** |
+| Direcciones | 1.916 | 1.829 |
+| Con sector CIIU | 188.300 | **188.951 · 60,76 %** |
+
+---
+
 ## D20 — Cada situación laboral es una categoría, no «no identificable»
 
 - **Fecha:** 2026-08-08

@@ -512,7 +512,11 @@ _regla('AUTOMOTRIZ|AUTOS|VEHICULOS|CONCESIONARIO|REPUESTOS|LLANTAS|'
 # de Innovación Agropecuaria. Ahora pierde contra el token que sí describe qué
 # se hace, y solo decide cuando no hay ninguno — que es el caso mayoritario.
 _regla('INSTITUTO', 'P', '85', 'Enseñanza', 3)
-_regla('SUPER', 'G', '47', 'Comercio al por menor', 3)
+# Peso 7, no 3: la frase `SUPER SERVICE` ya ataja el falso positivo que motivó
+# bajarlo en D14, y con peso 3 rompía la guarda de D10 — `MINI SUPER PARQUE EL
+# EMPALME` volvía a clasificarse como dirección porque `PARQUE` le ganaba.
+_regla('SUPER|MINISUPER|MINISUPERMERCADO|SUPERETTE', 'G', '47',
+       'Comercio al por menor', 7)
 _regla('GLOBAL', 'N', '82', 'Actividades de apoyo a empresas', 1)
 
 # Ampliación del vocabulario de oficios con el tramo alfabético A-B (D20).
@@ -1267,6 +1271,21 @@ _GRUPOS_SITUACION: list[tuple[str, set[str]]] = [
         'DESEMPLEADO', 'DESEMPLEADA', 'CESANTE', 'NO TRABAJA', 'SIN TRABAJO',
         'SIN EMPLEO', 'NO LABORA', 'NO ESTA LABORANDO', 'NO ESTA TRABAJANDO',
         'QUEDO CESANTE', 'ACABA DE QUEDAR CESANTE', 'SIN EMPLEO ACTUAL',
+    }),
+    # Anotaciones del sistema de originación. Tampoco son «no identificables»:
+    # dicen con precisión por qué el campo de empleador vino sin empleador.
+    ('Cliente fallecido', {
+        'CLIENTE FALLECIDO', 'CLIENTE FALLECIDA', 'FALLECIDO', 'FALLECIDA',
+    }),
+    ('Menor de edad', {
+        'MENOR DE EDAD', 'MENOR DEPENDIENTE', 'MENOR',
+    }),
+    ('Dependiente económico', {
+        'DEPENDIENTE ECONOMICO', 'DEPENDIENTE ECONOMICA', 'DEPENDIENTE',
+        'DEPENDIENTE DE TERCERO', 'DEPENDIENTE DE UN TERCERO',
+    }),
+    ('Cuenta cerrada o cancelada', {
+        'CUENTA CANCELADA', 'CUENTA CERRADA',
     }),
 ]
 

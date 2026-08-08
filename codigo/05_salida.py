@@ -10,7 +10,7 @@ Genera los entregables:
   salidas/maestro_corporativo.csv    una fila por empleador único
   salidas/kpis_calidad.json          métricas de calidad de datos
   salidas/concentracion_sectorial.csv  vista para riesgo de cartera
-  salidas/revision_sin_sector.xlsx   lo que queda sin sector, en orden alfabético
+  salidas/revision_pendiente.xlsx    archivo de trabajo: todo lo no resuelto, alfabético
 
 Si la fase 7 ya corrió, sus resultados se incorporan automáticamente.
 
@@ -214,28 +214,41 @@ def main() -> None:
         wb.save(os.path.join(comun.DIR_SALIDAS, 'dataset_resultado.xlsx'))
 
     # ---- archivo de trabajo para el ciclo de revisión ---------------------
-    # Ordenado alfabéticamente a propósito: ordenar por volumen muestra los
-    # errores caros, pero ordenar alfabéticamente agrupa las **familias**
-    # (`ABOGAD*`, `ADMINISTRADOR*`, `AMA DE CASA*`) y ahí se ve el patrón que la
-    # frecuencia esconde. D18, D19 y D20 salieron todas de esta vista.
+    # Un registro está *resuelto* solo si es un empleador identificado Y tiene
+    # sector. Todo lo demás va aquí, con la columna `bloque` para poder filtrar
+    # por el tipo de problema. Es un archivo de trabajo, no un entregable.
+    #
+    # Ordenado alfabéticamente por `nombre_original` a propósito: ordenar por
+    # volumen muestra los errores caros, pero ordenar alfabéticamente agrupa las
+    # **familias** (`ABOGAD*`, `ADMINISTRADOR*`, `AMA DE CASA*`) y ahí se ve el
+    # patrón que la frecuencia esconde. D18, D19 y D20 salieron de esta vista.
     with comun.Fase('escribir archivo de revisión'):
-        pendientes = sorted(
-            (a[0].lstrip("'"), a[2], a[3], a[9], a[7])
+        def bloque(a: list) -> str:
+            if a[9] not in TIPOS_EMPLEADOR:
+                return ('No identificable' if a[2].startswith('No identificable')
+                        else 'Situación laboral')
+            return 'Empleador sin sector'
+
+        revision = sorted(
+            (bloque(a), a[0].lstrip("'"), a[2], a[3], a[9], a[7])
             for a in auditoria
-            if not a[4] and a[9] in TIPOS_EMPLEADOR
+            if not a[4] or a[9] not in TIPOS_EMPLEADOR
         )
         wb = openpyxl.Workbook()
         wb.remove(wb.active)
-        ws = wb.create_sheet('sin sector')
-        ws.append(['nombre_original', 'nombre_propuesto', 'sector_propuesto',
-                   'tipo_registro', 'confianza'])
-        for fila in pendientes:
+        ws = wb.create_sheet('por revisar')
+        ws.append(['bloque', 'nombre_original', 'nombre_propuesto',
+                   'sector_propuesto', 'tipo_registro', 'confianza'])
+        for fila in revision:
             ws.append(list(fila))
         ws.freeze_panes = 'A2'
         ws.auto_filter.ref = ws.dimensions
-        wb.save(os.path.join(comun.DIR_SALIDAS, 'revision_sin_sector.xlsx'))
-        comun.log('  revision_sin_sector.xlsx: %d registros sin sector, alfabético'
-                  % len(pendientes))
+        wb.save(os.path.join(comun.DIR_SALIDAS, 'revision_pendiente.xlsx'))
+        resumen_bloques = collections.Counter(f[0] for f in revision)
+        comun.log('  revision_pendiente.xlsx: %d filas | %s'
+                  % (len(revision),
+                     ' · '.join('%s %d' % (k, v)
+                                for k, v in resumen_bloques.most_common())))
 
     # ---- KPIs de calidad de datos ---------------------------------------
     n = len(dataset)

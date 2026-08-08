@@ -19,7 +19,7 @@ salidas/dataset_resultado.csv
 salidas/dataset_resultado.xlsx
 salidas/maestro_corporativo.csv
 salidas/tabla_auditoria.csv.gz
-salidas/revision_sin_sector.xlsx
+salidas/revision_pendiente.xlsx
 
 # Intermedios de cada fase: reproducibles desde la fuente
 trabajo/

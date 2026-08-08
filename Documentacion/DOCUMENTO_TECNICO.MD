@@ -15,10 +15,10 @@ cada decisión.
 | Resultado | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 310.912 · **96,26 %** |
-| Empleadores únicos en el maestro | 200.613 |
+| Empleadores identificados | 310.999 · **96,28 %** |
+| Empleadores únicos en el maestro | 200.650 |
 | Consolidación de variantes | **35,4 %** |
-| Con sector CIIU asignado | 188.858 · **60,7 %** de los empleadores |
+| Con sector CIIU asignado | 188.951 · **60,8 %** de los empleadores |
 | Tiempo total de ejecución | **~2 minutos** en un portátil |
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 
@@ -488,7 +488,7 @@ es el tipo de riesgo que sorprende a los comités.
 | Caso | Volumen | Tratamiento |
 |---|---:|---|
 | Nombre truncado en el tope del campo | 20.532 | Regla de prefijo con distancia asimétrica; penalización en confianza si no hay variante completa |
-| Direcciones en lugar de empleador | 1.928 | `No identificable - Direcciones`. Token fuerte de vía basta; los débiles necesitan respaldo. Tres guardas evitan confundir negocio con inmueble: sufijo societario, orden de aparición y el giro «Casa de X» (D10) |
+| Direcciones en lugar de empleador | 1.829 | `No identificable - Direcciones`. Token fuerte de vía basta; los débiles necesitan respaldo. Tres guardas evitan confundir negocio con inmueble: sufijo societario, orden de aparición y el giro «Casa de X» (D10) |
 | Situación laboral, no empleador | 3.630 | `AMA DE CASA`, `JUBILADO`, `DESEMPLEADO` → categoría propia |
 | Anotaciones del sistema de originación | 899 | `CLIENTE FALLECIDO`, `MENOR DEPENDIENTE`. **No estaban previstos en el enunciado**; se descubrieron al revisar los clústeres más grandes |
 | Persona natural como empleador | 452 | Empleador válido en Panamá; se marca aparte para no contaminar el maestro corporativo como sociedad |
@@ -523,6 +523,7 @@ Tras la primera entrega completa, una revisión de resultados sobre filas concre
 | D18 | «Sin empleador corporativo» tratado como «sin información» | `Abogada independiente` sin sector | 1.677 |
 | D19 | Lo mismo, sin generalizar a los inactivos | `Jubilado de la Caja del Seguro Social` sin sector | 1.377 |
 | D20 | Todas las situaciones laborales en un solo cajón «no identificable» | `Ama de casa` indistinguible de `Cliente fallecido` | 4.346 |
+| D21 | El archivo de revisión filtraba el bloque contrario al revisado | Herramienta inútil para el problema real | — |
 
 **D8-D11 y D14-D15 comparten causa: dos categorías que comparten vocabulario, y un ganador
 elegido implícitamente.** «Plaza» es dirección y es hotel; `PH` es edificio y es persona

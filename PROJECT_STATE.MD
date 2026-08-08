@@ -7,7 +7,7 @@ con score de confianza y explicación por registro.
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo trece correcciones (D8-D20). Solo queda la fase 7 (validación externa), que está
+produjo catorce correcciones (D8-D21). Solo queda la fase 7 (validación externa), que está
 construida y probada en su ruta de estimación pero no ejecutada: requiere credencial.
 
 ## Misión activa
@@ -20,10 +20,10 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 | Métrica | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 310.912 · 96,26 % |
-| Empleadores únicos (maestro) | 200.613 |
+| Empleadores identificados | 310.999 · 96,28 % |
+| Empleadores únicos (maestro) | 200.650 |
 | Consolidación de variantes | 35,5 % |
-| Con sector CIIU | 188.858 · 60,74 % de los empleadores |
+| Con sector CIIU | 188.951 · 60,76 % de los empleadores |
 | Confianza promedio / mediana | 51,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
@@ -58,6 +58,8 @@ verificación individual 130.960 (40,5 %).
   `SECTOR_RECUPERABLE` generaliza D18 a los inactivos
 - **D20** — Cada situación laboral es una categoría propia (ama de casa, jubilado,
   estudiante, desempleado), no un cajón llamado «no identificable»
+- **D21** — Corrección de D20: el archivo de revisión filtraba al revés; categorías
+  para las anotaciones del sistema; regresión de `SUPER` causada por D14
 
 ## Pendientes prioritarios
 - **Alta** — Decidido por negocio: los clústeres de una sola aparición no aportan al
@@ -86,7 +88,7 @@ verificación individual 130.960 (40,5 %).
 ## Archivos actualmente afectados
 - `prueba_tecnica_ing_datos.xlsx` — fuente de verdad, **solo lectura, nunca modificada**
 - `codigo/` — 6 orquestadores + 6 módulos (reglas, normalización, canónico, sector, confianza, común)
-- `salidas/` — 7 entregables generados, incluido `revision_sin_sector.xlsx`
+- `salidas/` — 6 entregables + `revision_pendiente.xlsx` (archivo de trabajo)
 - `Documentacion/DOCUMENTO_TECNICO.MD` — documento técnico con las 5 preguntas estratégicas
 - `Documentacion/PROPUESTA_EVOLUCION.MD` — evolución del producto analítico
 - `Documentacion/Mantenimiento/` — perfilamiento y decisiones
