@@ -22,11 +22,22 @@ cada decisión.
 | Tiempo total de ejecución | **~2 minutos** en un portátil |
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 
-El corte del 60,7 % en cobertura sectorial no es una limitación del método: es el
-punto exacto donde la evidencia interna se agota. Los 89.720 clústeres restantes
+El corte del 63,2 % en cobertura sectorial no es una limitación del método: es el
+punto exacto donde la evidencia interna se agota. Los 84.716 clústeres restantes
 son marcas sin palabra descriptiva —`BRICKHAUS`, `SOLINTECSA`, `WILHELMSEN`— que
-requieren conocimiento externo. La fase 7 está construida y su costo medido:
-**USD 149** con Claude Opus 5, **USD 75** usando la Message Batches API.
+requieren conocimiento externo.
+
+Que ese corte es un límite y no una falta de esfuerzo quedó medido en D28: al contar
+las palabras del residuo ponderadas por registros, las trece más frecuentes son
+`CORPORATION`, `CENTRO`, `CENTER`, `EXPRESS`, `LATIN`, `COLOMBIA`, `VENEZUELA`,
+`FAMILIA`, `CENTRAL`, `LTDA`, `LIMITED`, `STAR` y `WORLD`. **Ninguna nombra una
+actividad.** `R P CORPORATION S A` no dice a qué se dedica, y ninguna regla sobre el
+texto puede saberlo.
+
+La fase 7 está construida y su costo medido sobre la cola actual: **USD 123** con
+Claude Opus 5 y **USD 25** con Haiku 4.5, la mitad en ambos casos usando la Message
+Batches API. Acotada a los clústeres que aparecen 2 o más veces —el 47 % de los
+registros pendientes— baja a **USD 6 con Haiku 4.5**.
 
 ---
 
@@ -99,7 +110,7 @@ prueba_tecnica_ing_datos.xlsx  (solo lectura, nunca se modifica)
 ┌─ BLOQUE 3 ── fases 8, 9, 11 ───────────────────────────────────────┐
 │  Razón social canónica · Sector CIIU por voto ponderado             │
 │  Reproceso iterativo: el clúster propaga lo aprendido               │
-│  110.653 clústeres clasificados ·  89.720 pendientes                │
+│  113.974 clústeres clasificados ·  84.716 pendientes                │
 └─────────────────────────────────────────────────────────────────────┘
         ▼
 ┌─ BLOQUE 4 ── fase 7 ───────────────────────── (requiere credencial) ┐
@@ -262,18 +273,27 @@ Cascada determinística de la evidencia más fuerte a la más débil:
 
 | # | Fuente | Clústeres | % |
 |---|---|---:|---:|
-| 1 | Gazetteer — 185 empleadores ancla de Panamá | 3.573 | 1,8 % |
-| 2 | Propiedad horizontal (forma jurídica, no palabra clave) | 871 | 0,4 % |
-| 3 | Frase del catálogo (`SALON DE BELLEZA`, `CAJA DE SEGURO`) | 7.163 | 3,6 % |
-| 4 | Token con peso (`FERRETERIA` p8 > `SERVICIOS` p1) | 90.306 | 45,1 % |
-| 5 | Token aproximado (errata o singular/plural) | 8.029 | 4,0 % |
-| 6 | Propagación por zona de duda | 441 | 0,2 % |
-| 7 | Reclasificación (no es un empleador) | 270 | 0,1 % |
-| — | **Sin evidencia interna → fase 7** | **89.720** | **44,8 %** |
+| 1 | Gazetteer — 245 empleadores ancla de Panamá | 3.710 | 1,9 % |
+| 2 | Propiedad horizontal (forma jurídica, no palabra clave) | 873 | 0,4 % |
+| 3 | Frase del catálogo (`SALON DE BELLEZA`, `CAJA DE SEGURO`) | 8.156 | 4,1 % |
+| 4 | Token con peso (`FERRETERIA` p8 > `SERVICIOS` p1) | 95.470 | 48,0 % |
+| 5 | Prefijo comercial pegado al nombre (`REFRICAR`, `REFRIHOGAR`) | 78 | 0,0 % |
+| 6 | Token aproximado (errata o singular/plural) | 5.154 | 2,6 % |
+| 7 | Propagación por zona de duda | 455 | 0,2 % |
+| 8 | Reclasificación (no es un empleador) | 78 | 0,0 % |
+| — | **Sin evidencia interna → fase 7** | **84.716** | **42,6 %** |
 
-Los niveles 2, 5 y 6 no estaban en el diseño original: salieron del ciclo de revisión
-(D11, D12, D17) y aportan 9.341 clústeres que antes quedaban sin sector. El nivel 1
-creció de ~60 a 185 anclas con investigación de dominio aportada por negocio (D13).
+Cinco de los ocho niveles no estaban en el diseño original: salieron del ciclo de
+revisión. La propiedad horizontal (D12) y la propagación por zona de duda (D17)
+aprovechan evidencia que el motor ya tenía y no usaba; el prefijo comercial (D24)
+nació de que el comercio panameño bautiza pegando el giro al nombre. El nivel 1
+creció de ~60 a 245 anclas con investigación de dominio aportada por negocio (D13,
+D25).
+
+El nivel 6 **encogió** de 8.029 a 5.154 clústeres, y eso fue una mejora: la auditoría
+de D27 encontró que la comparación aproximada estaba clasificando mal 1.085 registros
+—`PRODUCTOS` se parece a `PRODUCTIONS` en un 90 %, que es exactamente el umbral, y
+mandaba `PRODUCTOS OCEANOS` a «productoras de cine»—. Ver §9.1.
 
 ### 6.1 Voto ponderado, no primer acierto
 
@@ -553,9 +573,10 @@ educativo panameño, no se infieren del corpus por mucho que se lo analice. Se a
 la justificación de que `reglas.py` esté separado del motor: integrar 125 entidades nuevas
 fue editar un diccionario, no rediseñar nada.
 
-Efecto acumulado: cobertura sectorial 52,8 % → **60,7 %**; confianza en banda automática
-10,5 % → **11,5 %**; `No identificable - Falta informacion` de 148.260 a **250** registros;
-cola de validación externa de 103.139 a **89.148** clústeres.
+Efecto acumulado: cobertura sectorial 52,8 % → **63,2 %**; `No identificable - Falta
+informacion` de 148.260 a **250** registros; cola de validación externa de 103.139 a
+**84.716** clústeres; y 1.085 clasificaciones falsas retiradas en la auditoría de D27,
+que es la única decisión del proyecto que empeora la métrica principal a propósito.
 
 ---
 
@@ -628,7 +649,7 @@ Lo que este pipeline **no** puede saber, y por qué:
 2. **Los nombres completos de los 20.532 registros truncados.** La información se
    perdió en el sistema de origen y no es recuperable desde este archivo.
 3. **Si el empleador está activo.** Requiere Registro Público.
-4. **El sector real de los 89.720 clústeres sin evidencia interna.** Requiere la
+4. **El sector real de los 84.716 clústeres sin evidencia interna.** Requiere la
    fase 7 o una fuente externa.
 5. **Tildes y eñes.** Destruidas aguas arriba de forma irreversible.
 
