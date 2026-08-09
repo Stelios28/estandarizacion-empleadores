@@ -49,9 +49,9 @@ ensuciarse. Limpiar hacia atrás sin cerrar el grifo es trabajo recurrente.
   sectorial por un hecho.
 - **Estructura de grupos** — matriz, subsidiarias, sucursales. Los códigos de
   sucursal ya detectados (`EMPRESAS MELO 019`, `020`, `025`…) son la semilla.
-- **Cierre de la fase 7** — validación externa sobre los 84.716 clústeres
-  pendientes, con caché acumulativa. Acotada a los que aparecen 2 o más veces
-  cubre el 47 % de los registros por USD 6 con Haiku 4.5.
+- **Cierre de la fase 7** — validación externa sobre los 84.476 clústeres
+  pendientes, con caché acumulativa. Acotada a los 20.152 que aparecen 2 o más
+  veces cubre el 46 % de los registros por USD 5,85 con Haiku 4.5.
 
 **Efecto medible:** cobertura sectorial de 63 % a > 90 %; confianza en banda
 automática de 11,5 % a > 60 %.

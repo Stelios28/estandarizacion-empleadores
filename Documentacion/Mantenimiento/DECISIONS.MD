@@ -221,6 +221,76 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D32 - Auditar la fase 7 antes de pagarla
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** decima iteracion. El vocabulario esta agotado (D28, D29) y el siguiente
+  paso del proyecto es la fase 7, que **esta escrita desde el bloque 4 y nunca se ha
+  ejecutado ni una sola vez**. Un defecto ahi se descubre gastando dinero.
+
+### Ensayo en seco: todo menos la llamada
+
+Se ejecuto la fase completa salvo `messages.create`, verificando cada pieza:
+
+| Comprobacion | Resultado |
+|---|---|
+| El `{catalogo}` del prompt se resuelve | si |
+| Lineas de catalogo enviadas | 67 |
+| Secciones CIIU sin ninguna division en el prompt | ninguna |
+| Divisiones que aparecen en dos secciones (ambiguas) | ninguna |
+| Tamaño del prompt de sistema | 4.736 caracteres, ~1.350 tokens |
+| Indice `n` fuera de rango en la respuesta | **ya estaba cubierto** |
+| Seccion/division fuera del catalogo | **NO estaba cubierto** |
+| `stop_reason == 'refusal'` | ya estaba cubierto |
+| `stop_reason == 'max_tokens'` | **NO estaba cubierto** |
+
+### El hueco que importa
+
+El prompt dice, en mayusculas:
+
+> Solo puedes responder con una combinacion seccion+division de esta lista
+
+Y el codigo **no lo comprobaba**. Una respuesta con `seccion: "Z"` entraba al maestro
+corporativo con exactamente la misma apariencia que una buena.
+
+**Un prompt es una peticion, no una garantia.** La instruccion en el prompt reduce la
+probabilidad; la verificacion en el codigo la elimina. Son capas distintas y hacen
+falta las dos — la salida estructurada valida la *forma* del JSON, no que los valores
+esten en un catalogo cerrado.
+
+Se añadio `PARES_CIIU` y la comprobacion. Una respuesta fuera del catalogo no se
+descarta en silencio: se vacia el sector, la confianza pasa a `ninguna` y **el motivo
+conserva lo que el modelo dijo**, entre corchetes, para poder auditarlo despues.
+
+### Y el truncado
+
+Con `max_tokens` el JSON llega cortado y `json.loads` revienta con un error que no
+dice nada util. Ahora se detecta antes y el mensaje indica la accion correcta: **bajar
+`TAMANO_LOTE`, no reintentar** — reintentar el mismo lote da el mismo resultado y
+cuesta lo mismo.
+
+### Estimacion actualizada
+
+La cola bajo de 103.139 clusteres al principio del ciclo a **84.476** hoy:
+
+| Alcance | Opus 5 | Con Batches | Haiku 4.5 | Haiku + Batches |
+|---|---:|---:|---:|---:|
+| Toda la cola (84.476) | USD 122,67 | USD 61,34 | USD 24,53 | USD 12,27 |
+| **Solo 2+ registros (20.152)** | USD 29,26 | USD 14,63 | **USD 5,85** | **USD 2,93** |
+
+Los 20.152 clusteres que aparecen 2 o mas veces cubren el **46,1 %** de los registros
+sin sector. Los otros 64.324 son de una sola aparicion, y negocio ya declaro que no
+aportan al analisis de concentracion.
+
+### Por que esto cuenta como «agotar los recursos gratuitos»
+
+Javier pidio agotar lo gratis antes de gastar. Revisar el codigo que va a gastar
+**es** parte de agotar lo gratis: una seccion inventada en 84.476 respuestas no se
+detecta leyendo el resultado, y una corrida truncada a mitad se paga igual.
+
+---
+
 ## D31 - La reconstruccion de la Ñ, derivada del corpus en vez de enumerada
 
 - **Fecha:** 2026-08-08

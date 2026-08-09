@@ -15,7 +15,7 @@ cada decisión.
 | Resultado | Valor |
 |---|---:|
 | Registros procesados | 323.001 |
-| Empleadores identificados | 309.551 · **95,84 %** |
+| Empleadores identificados | 309.553 · **95,84 %** |
 | Empleadores únicos en el maestro | 200.650 |
 | Consolidación de variantes | **35,4 %** |
 | Con sector CIIU asignado | 196.224 · **63,4 %** de los empleadores |
@@ -23,7 +23,7 @@ cada decisión.
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 
 El corte del 63,2 % en cobertura sectorial no es una limitación del método: es el
-punto exacto donde la evidencia interna se agota. Los 84.716 clústeres restantes
+punto exacto donde la evidencia interna se agota. Los 84.476 clústeres restantes
 son marcas sin palabra descriptiva —`BRICKHAUS`, `SOLINTECSA`, `WILHELMSEN`— que
 requieren conocimiento externo.
 
@@ -34,10 +34,11 @@ las palabras del residuo ponderadas por registros, las trece más frecuentes son
 actividad.** `R P CORPORATION S A` no dice a qué se dedica, y ninguna regla sobre el
 texto puede saberlo.
 
-La fase 7 está construida y su costo medido sobre la cola actual: **USD 123** con
-Claude Opus 5 y **USD 25** con Haiku 4.5, la mitad en ambos casos usando la Message
-Batches API. Acotada a los clústeres que aparecen 2 o más veces —el 47 % de los
-registros pendientes— baja a **USD 6 con Haiku 4.5**.
+La fase 7 está construida, auditada en seco (D32) y su costo medido sobre la cola
+actual: **USD 122,67** con Claude Opus 5 y **USD 24,53** con Haiku 4.5, la mitad en
+ambos casos usando la Message Batches API. Acotada a los 20.152 clústeres que aparecen
+2 o más veces —el 46,1 % de los registros pendientes— baja a **USD 5,85 con Haiku
+4.5**.
 
 ---
 
@@ -281,7 +282,7 @@ Cascada determinística de la evidencia más fuerte a la más débil:
 | 6 | Token aproximado (errata o singular/plural) | 5.154 | 2,6 % |
 | 7 | Propagación por zona de duda | 455 | 0,2 % |
 | 8 | Reclasificación (no es un empleador) | 78 | 0,0 % |
-| — | **Sin evidencia interna → fase 7** | **84.716** | **42,6 %** |
+| — | **Sin evidencia interna → fase 7** | **84.476** | **42,5 %** |
 
 Cinco de los ocho niveles no estaban en el diseño original: salieron del ciclo de
 revisión. La propiedad horizontal (D12) y la propagación por zona de duda (D17)
@@ -649,7 +650,7 @@ Lo que este pipeline **no** puede saber, y por qué:
 2. **Los nombres completos de los 20.532 registros truncados.** La información se
    perdió en el sistema de origen y no es recuperable desde este archivo.
 3. **Si el empleador está activo.** Requiere Registro Público.
-4. **El sector real de los 84.716 clústeres sin evidencia interna.** Requiere la
+4. **El sector real de los 84.476 clústeres sin evidencia interna.** Requiere la
    fase 7 o una fuente externa.
 5. **Tildes y eñes.** Destruidas aguas arriba de forma irreversible. Medido en
    D30: la Ñ no solo se perdió, dejó un hueco que **partió la palabra en dos**

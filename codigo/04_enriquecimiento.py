@@ -68,6 +68,12 @@ PRECIO_CACHE_LECTURA = 0.50      # ~0,1x la entrada
 
 RUTA_CACHE = 'trabajo/04_cache_llm.json'
 
+# Pares (sección, división) que el catálogo autoriza. Se usa para verificar la
+# respuesta: el prompt los enumera, pero un prompt pide, no obliga (D32).
+PARES_CIIU: frozenset[tuple[str, str]] = frozenset(
+    (s, d) for s, d, _e, _p in reglas.REGLAS_CIIU.values()
+)
+
 
 # --------------------------------------------------------------------------
 # Prompt
@@ -221,6 +227,13 @@ def consultar_lote(cliente, sistema: str, nombres: list[str]) -> dict[str, dict]
 
     if respuesta.stop_reason == 'refusal':
         raise RuntimeError('respuesta rechazada: %s' % (respuesta.stop_details,))
+    # Con `max_tokens` el JSON llega cortado y `json.loads` revienta con un error
+    # que no dice nada. Se detecta aquí para que el mensaje sea accionable: la
+    # solución es bajar `TAMANO_LOTE`, no reintentar.
+    if respuesta.stop_reason == 'max_tokens':
+        raise RuntimeError(
+            'respuesta truncada en max_tokens con un lote de %d nombres; '
+            'baja TAMANO_LOTE o sube max_tokens' % len(nombres))
 
     texto = next(b.text for b in respuesta.content if b.type == 'text')
     datos = json.loads(texto)
@@ -228,6 +241,15 @@ def consultar_lote(cliente, sistema: str, nombres: list[str]) -> dict[str, dict]
     salida: dict[str, dict] = {}
     for r in datos['resultados']:
         i = r['n'] - 1
+        # El prompt dice «solo puedes responder con una combinación de esta
+        # lista», pero un prompt es una petición, no una garantía. Sin esta
+        # comprobación una sección inventada entra al maestro corporativo con la
+        # misma apariencia que una buena, y nadie la distingue después.
+        if r.get('seccion') and (r['seccion'], r.get('division', '')) not in PARES_CIIU:
+            r['motivo'] = ('[descartado: %s/%s no está en el catálogo] %s'
+                           % (r['seccion'], r.get('division', ''), r.get('motivo', '')))
+            r['seccion'] = r['division'] = ''
+            r['confianza'] = 'ninguna'
         if 0 <= i < len(nombres):
             r['_uso'] = {
                 'entrada': respuesta.usage.input_tokens,
