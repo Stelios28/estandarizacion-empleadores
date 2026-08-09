@@ -221,6 +221,107 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D27 - Auditar lo clasificado, no solo lo que falta
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** quinta iteracion del muestreo. Las cuatro anteriores buscaron **huecos**
+  —registros sin sector—. Esta busco **errores**: muestreo de lo ya clasificado por
+  las vias mas debiles, para ver si estaba bien puesto.
+
+### Por que tocaba
+
+Cuatro tiradas seguidas subiendo la cobertura crean un sesgo: se optimiza lo que se
+mide, y lo que se medía era el porcentaje con sector. **Un sector equivocado es peor
+que un hueco** — el hueco se ve y se manda a la fase 7; el error entra al reporte de
+Riesgo como si fuera un dato.
+
+Se muestrearon 40 nombres de cada una de las cuatro vias mas debiles.
+
+### Lo que aparecio: 1.085 registros mal clasificados
+
+| Regla | Registros | Que pasaba |
+|---|---:|---|
+| `PRODUCTOS` ~ `PRODUCTIONS` al **90 %** | **574** | `PRODUCTOS OCEANOS`, `PRODUCTOS ALIMENTICIOS PASCUAL` y `PRODUCTOS CORQUIVEN` clasificados como **productoras de cine** |
+| `SOLUTION` = `SOLUTIONS` | 287 | Palabra de fantasia tratada como giro |
+| `SISTEMA` = `SISTEMAS` | 209 | `PROBOILER SISTEMA DE VAPOR` es una caldera, no software |
+| `BAKER` = `BAKERS` | 15 | `HAYWARD BAKER` es una constructora de cimentaciones |
+
+**Dos de los cuatro los introduje yo en D26**, la tirada inmediatamente anterior:
+`PRODUCTIONS` y `BAKERY` son reglas nuevas de esa decision, y ninguna prueba de humo
+las cazo porque el dano no estaba en las palabras que anadi, sino en **lo que se
+parecia a ellas**.
+
+El caso de `PRODUCTOS` es el mas instructivo. `PRODUCTOS`(9) contra
+`PRODUCTIONS`(11) puntua exactamente 90, que es el umbral. Y `PRODUCTOS` es una de
+las palabras mas frecuentes del corpus español —508 registros en el conteo de D22—.
+**Una palabra española corrientisima nunca debio entrar a una comparacion difusa con
+vocabulario ingles.**
+
+### El nombre del conjunto era parte del defecto
+
+La lista que existe justamente para esto se llamaba `MORFOLOGIA_EXCLUIDA`. Pero
+`por_token_aproximado` la consulta **antes de las dos rampas**, la morfologica y la
+difusa. Leyendo el nombre, nadie diria que sirve para bloquear una comparacion
+difusa; leyendo el codigo, si.
+
+Ese malentendido me costo dos errores: en D26 anadi `PRODUCCION` pensando que solo
+tapaba el plural morfologico, y no revise que la misma lista habria evitado el fuzzy
+de `PRODUCTOS`.
+
+Renombrada a **`EXCLUIDAS_DEL_APROXIMADO`**, que es lo que hace.
+
+### `SOLUTIONS`, `DIGITAL` y `DATA` bajan a peso 3
+
+No son giros: son palabras que cualquier empresa se pone en el nombre, igual que
+`CORPORATION` o `EXPRESS`. Con peso 6 le ganaban a tokens de actividad real. Con 3
+solo deciden cuando no hay nada mejor. `SOFTWARE` e `INFORMATICA` suben a 7, que es
+donde debian estar: esas si nombran el oficio.
+
+### Dos correcciones sueltas de la misma auditoria
+
+**La Loteria Nacional seguia clasificada como esparcimiento.** Javier lo señalo al
+revisar el documento de grandes empleadores, y quedo a medias: se corrigio el
+tratamiento general pero la entrada del gazetteer siguio apuntando a R/92. La
+Loteria Nacional de Beneficencia es una institucion autonoma del Estado — O/84.
+
+**`PH CONSULTORES S A` y `PH CONTRACTOR INC` no son propiedades horizontales.** Una
+PH no se inscribe como sociedad anonima; si el nombre trae sufijo societario, `PH`
+son las iniciales de otra cosa.
+
+### Y una compensacion
+
+Sacar `PRODUCTOS` de la comparacion difusa deja sin sector a los que si informaban.
+Se recuperan con frases, que se evaluan antes que los tokens: `PRODUCTOS
+ALIMENTICIOS` (C/10), `PRODUCTOS QUIMICOS` (C/20), `PRODUCTOS FARMACEUTICOS` (C/21),
+`PRODUCTOS DE BELLEZA` (G/47), `PRODUCTOS AGRICOLAS` (A/01). Tambien entro `CRANE`,
+que en D24 se anadio solo en español.
+
+### Efecto medido: la cobertura BAJA, y eso es la mejora
+
+| | Antes (D26) | Despues |
+|---|---:|---:|
+| Con sector CIIU | 196.314 | **195.381** |
+| Cobertura sobre empleadores | 63,42 % | **63,12 %** |
+| Clasificaciones falsas retiradas | — | **1.085** |
+| Recuperadas con las frases nuevas | — | ~152 |
+
+**Es la primera decision del proyecto que empeora la metrica principal a proposito.**
+
+Vale la pena dejarlo escrito: durante cuatro tiradas la cobertura subio 6.860
+registros y nadie estaba comprobando que esos registros estuvieran bien. Una racha
+de mejoras en una sola metrica es exactamente el momento en que conviene auditar,
+no el momento de acelerar.
+
+### Lo que queda pendiente
+
+`propagacion_duda` (783 registros) mostro en la muestra un 10-20 % de destinos
+dudosos: `BEST QUALITY CRANE` heredando «agencias de viajes», `COLGATE PALMOLIVE`
+como comercio minorista en lugar de manufactura, `OFICINA PROPIA` como agricultura.
+Es la via mas debil que queda y merece su propia revision — anotado como **R13**.
+
+---
+
 ## D26 - El catalogo estaba escrito en español y media plaza trabaja en ingles
 
 - **Fecha:** 2026-08-08

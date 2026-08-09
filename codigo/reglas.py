@@ -243,6 +243,11 @@ def es_propiedad_horizontal(tokens: list[str]) -> bool:
     """
     if TOKEN_PROPIEDAD_HORIZONTAL not in tokens[:2]:
         return False
+    # Una PH no se inscribe como sociedad anónima: si el nombre trae sufijo
+    # societario, `PH` son las iniciales de otra cosa. `PH CONSULTORES S A` y
+    # `PH CONTRACTOR INC` son empresas, no edificios (D27).
+    if separar_sufijo_societario(tokens)[1]:
+        return False
     conjunto = set(tokens)
     # Unidad concreta -> es el domicilio de alguien, no la entidad.
     # Token fuerte de vía -> es una dirección que menciona un PH de referencia.
@@ -915,9 +920,15 @@ _regla('RESTAURANTE|RESTAURANT|CAFETERIA|FONDA|PIZZERIA|MARISQUERIA|PARRILLADA|'
        'I', '56', 'Servicio de comidas y bebidas', 8)
 
 # --- J. Información y comunicaciones --------------------------------------
-_regla('SOFTWARE|SISTEMAS|INFORMATICA|TECNOLOGIA|TECNOLOGIAS|COMPUTO|'
-       'COMPUTADORAS|DATA|DIGITAL|SOLUTIONS|IT|CIBER',
-       'J', '62', 'Programación informática y consultoría', 6)
+_regla('SOFTWARE|INFORMATICA|COMPUTO|COMPUTADORAS|CIBER',
+       'J', '62', 'Programación informática y consultoría', 7)
+# Peso 3 para el segundo grupo: son palabras que cualquier empresa se pone en el
+# nombre sin ser de tecnología —`SOLUTIONS`, `DIGITAL` y `DATA` funcionan como
+# `CORPORATION` o `EXPRESS`— y `SISTEMAS` compite con `SISTEMA DE VAPOR` y
+# `SISTEMA DE RIEGO`. Con peso 6 le ganaban a tokens de actividad real; con 3
+# solo deciden cuando no hay nada mejor (D27).
+_regla('SISTEMAS|TECNOLOGIA|TECNOLOGIAS|DATA|DIGITAL|SOLUTIONS|IT',
+       'J', '62', 'Programación informática y consultoría', 3)
 _regla('TELECOMUNICACIONES|TELEFONIA|CABLE|TELECOM|COMUNICACIONES|INTERNET|'
        'SATELITAL', 'J', '61', 'Telecomunicaciones', 8)
 _regla('TELEVISION|RADIO|PRODUCTORA|MEDIOS|PERIODICO|PRENSA|NOTICIAS|'
@@ -1159,7 +1170,7 @@ _regla('HEALTH|HEALTHCARE|MEDICAL CENTER|WELLNESS|CHIROPRACTIC', 'Q', '86',
        'Actividades de atención de la salud humana', 6)      # 156
 # `LABORATORIO` a secas NO entra: `LABORATORIO DE INYECCION DIESEL` es un taller,
 # `LABORATORIO CLINICO` es salud y `LABORATORIOS X` suele ser farmacéutica. Es
-# genuinamente ambiguo — por eso está en MORFOLOGIA_EXCLUIDA desde D11. Entran
+# genuinamente ambiguo — por eso está en EXCLUIDAS_DEL_APROXIMADO desde D11. Entran
 # solo las formas que sí desambiguan.
 _regla('LABORATORIO CLINICO|LABORATORIO DE ANALISIS|ANALISIS CLINICOS',
        'Q', '86', 'Actividades de atención de la salud humana', 8)
@@ -1191,6 +1202,26 @@ _regla('INN AND SPA|HOTEL AND SPA|HOTEL Y SPA|RESORT AND SPA|INN', 'I', '55',
 # Reciclaje de chatarra es gestión de desechos, no metalmecánica.
 _regla('RECYCLING|RECICLAJE|RECICLADORA|RECICLADORES|CHATARRA|CHATARRERIA',
        'E', '38', 'Recogida, tratamiento y eliminación de desechos', 8)
+
+# --- `PRODUCTOS` con complemento (D27) -------------------------------------
+# `PRODUCTOS` a secas salió de la comparación aproximada porque se parecía a
+# `PRODUCTIONS` en un 90 % y mandaba 574 registros al cine. Pero la palabra sí
+# informa cuando trae el complemento, y las frases se evalúan antes que los
+# tokens. Se recupera la precisión sin reabrir el error.
+_regla('PRODUCTOS ALIMENTICIOS|PRODUCTOS LACTEOS|PRODUCTOS CARNICOS|'
+       'PRODUCTOS DEL MAR|PRODUCTOS AVICOLAS|PRODUCTOS DE PANADERIA',
+       'C', '10', 'Elaboración de productos alimenticios', 8)
+_regla('PRODUCTOS QUIMICOS|PRODUCTOS DE LIMPIEZA|PRODUCTOS PLASTICOS',
+       'C', '20', 'Fabricación de sustancias químicas', 8)
+_regla('PRODUCTOS FARMACEUTICOS|PRODUCTOS MEDICOS', 'C', '21',
+       'Fabricación de productos farmacéuticos', 8)
+_regla('PRODUCTOS DE BELLEZA|PRODUCTOS COSMETICOS|PRODUCTOS NATURALES',
+       'G', '47', 'Comercio al por menor', 7)
+_regla('PRODUCTOS AGRICOLAS|PRODUCTOS AGROPECUARIOS', 'A', '01',
+       'Agricultura, ganadería, caza', 8)
+# `CRANE` es grúa: la regla de D24 estaba solo en español.
+_regla('CRANE|CRANES', 'H', '52',
+       'Almacenamiento y actividades de apoyo al transporte', 7)
 
 FRASES_CIIU: list[str] = sorted(
     (k for k in REGLAS_CIIU if ' ' in k), key=len, reverse=True
@@ -1252,7 +1283,12 @@ GAZETTEER: dict[str, tuple[str, str, str]] = {
     'COPA AIRLINES': ('Copa Airlines, S.A.', 'H', '51'),
     'MANZANILLO INTERNATIONAL TERMINAL': ('Manzanillo International Terminal Panamá, S.A.', 'H', '52'),
     'PAYLESS': ('Payless ShoeSource Panamá, S.A.', 'G', '47'),
-    'LOTERIA NACIONAL BENEFICENCIA': ('Lotería Nacional de Beneficencia', 'R', '92'),
+    # O/84 y no R/92: la Lotería Nacional de Beneficencia es una institución
+    # autónoma del Estado panameño, no un negocio de apuestas. Lo señaló Javier
+    # en la revisión del documento de grandes empleadores y quedó a medias: la
+    # entrada del gazetteer siguió apuntando a esparcimiento hasta D27.
+    'LOTERIA NACIONAL BENEFICENCIA': ('Lotería Nacional de Beneficencia', 'O', '84'),
+    'LOTERIA NACIONAL': ('Lotería Nacional de Beneficencia', 'O', '84'),
     'CUERPO BOMBEROS': ('Cuerpo de Bomberos de Panamá', 'O', '84'),
     'MINISTERIO ECONOMIA FINANZAS': ('Ministerio de Economía y Finanzas', 'O', '84'),
     'MINISTERIO RELACIONES EXTERIORES': ('Ministerio de Relaciones Exteriores', 'O', '84'),
@@ -1546,7 +1582,30 @@ GAZETTEER: dict[str, tuple[str, str, str]] = {
 # son la misma palabra para él— y `PRODUCCION PANAMENA DE HIELO`, que es una
 # fábrica, terminaba clasificada como cine. Una exclusión deliberada en el
 # catálogo hay que repetirla aquí, o esta capa la deshace.
-MORFOLOGIA_EXCLUIDA: set[str] = {'LABORATORIO', 'GUARDIA', 'PRODUCCION'}
+#
+# D27 — Una auditoría de lo YA clasificado por esta vía encontró 1.085 registros
+# mal puestos, y el nombre de este conjunto era parte del problema: se llamaba
+# `MORFOLOGIA_EXCLUIDA` pero `por_token_aproximado` lo consulta antes de las **dos**
+# rampas, la morfológica y la difusa. Renombrado a `EXCLUIDAS_DEL_APROXIMADO`, que
+# es lo que de verdad hace.
+#
+#   PRODUCTOS  — `PRODUCTOS` se parece a `PRODUCTIONS` en un 90 %, que es
+#                exactamente el umbral. 574 registros: `PRODUCTOS OCEANOS`,
+#                `PRODUCTOS ALIMENTICIOS PASCUAL` y `PRODUCTOS CORQUIVEN`
+#                terminaron clasificados como productoras de cine. Es una de las
+#                palabras más frecuentes del corpus español; nunca debió entrar
+#                a una comparación con vocabulario inglés.
+#   SISTEMA    — `SISTEMA DE VAPOR` es una caldera y `SISTEMA DE RIEGO` es
+#                agricultura. El plural `SISTEMAS` sí nombra al integrador
+#                informático; el singular es la palabra corriente. 209 registros.
+#   SOLUTION   — `SOLUTIONS` ya es palabra de fantasía en un nombre de empresa
+#                (como `CORPORATION`); el singular todavía menos. 287 registros.
+#   BAKER      — apellido inglés. Entró como daño colateral de la regla `BAKERY`
+#                de D26: `HAYWARD BAKER` es una constructora de cimentaciones.
+EXCLUIDAS_DEL_APROXIMADO: set[str] = {
+    'LABORATORIO', 'GUARDIA', 'PRODUCCION',
+    'PRODUCTOS', 'PRODUCTO', 'SISTEMA', 'SOLUTION', 'BAKER',
+}
 
 
 # ==========================================================================

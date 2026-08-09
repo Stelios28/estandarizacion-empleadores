@@ -18,7 +18,7 @@ cada decisión.
 | Empleadores identificados | 309.551 · **95,84 %** |
 | Empleadores únicos en el maestro | 200.650 |
 | Consolidación de variantes | **35,4 %** |
-| Con sector CIIU asignado | 196.314 · **63,4 %** de los empleadores |
+| Con sector CIIU asignado | 195.381 · **63,1 %** de los empleadores |
 | Tiempo total de ejecución | **~2 minutos** en un portátil |
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 

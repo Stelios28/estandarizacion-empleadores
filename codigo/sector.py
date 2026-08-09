@@ -151,7 +151,7 @@ def por_token_aproximado(tokens: list[str]) -> tuple[str, str, str] | None:
 
     for t in tokens:
         if (t in reglas.REGLAS_CIIU or t in _NO_ELEGIBLES
-                or t in reglas.MORFOLOGIA_EXCLUIDA):
+                or t in reglas.EXCLUIDAS_DEL_APROXIMADO):
             continue
 
         cand = _variante_morfologica(t)
