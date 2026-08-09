@@ -221,6 +221,98 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D31 - La reconstruccion de la Ñ, derivada del corpus en vez de enumerada
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** novena iteracion. D30 enumero 27 reconstrucciones a mano y midio **873
+  fragmentos distintos**. Enumerarlos todos seria la lista muerta que este proyecto
+  viene evitando desde D22.
+
+### El corpus como diccionario
+
+Si `NU` y `EZ` van seguidos y `NUNEZ` aparece bien escrito en el propio archivo, la
+reconstruccion **esta probada por los datos**. No hace falta enumerarla.
+
+Es el mismo principio que `calidad_ortografica` usa desde el principio para elegir el
+nombre canonico —la frecuencia documental como diccionario, sin recurso externo—
+aplicado a un problema distinto. El vocabulario ya existia: la fase 1 hace dos
+pasadas y la primera lo calcula. Solo habia que pasarlo a la segunda.
+
+### La primera version unia 793 registros, y estaba mal
+
+Probada en seco antes de tocar el pipeline. La cabeza de la lista:
+
+```
+AMERICA S   -> AMERICANS    126      CO SA  -> CONSA      71
+CO S        -> CONS          47      MECO SA -> MECONSA   15
+SERVICIO S  -> SERVICIONS    10      FE SA  -> FENSA      15
+```
+
+**El sufijo societario se estaba comiendo la palabra anterior.** `AMERICA S A` es
+«América, S.A.» y quedaba como `AMERICANS`. `CO SA` es «Co., S.A.».
+
+Dos guardas lo cerraron:
+
+1. **Ni el sufijo societario ni las particulas son trozos de palabra.** `SA`, `S`,
+   `CO`, `DE`, `Y` no pueden ser ninguno de los dos lados.
+2. **El primer trozo tiene que ser mas raro que la palabra entera.** Un fragmento de
+   verdad —`NU` de `NUÑEZ`, `PANAME` de `PANAMEÑA`— aparece menos que la forma
+   completa; nunca al reves. `AMERICA` es palabra por derecho propio y tiene
+   frecuencia altisima, asi que no puede ser el trozo de nada.
+
+Con las dos, quedan **17 reconstrucciones distintas en 98 registros, todas correctas**:
+
+```
+NI O -> NINO        NU EZ -> NUNEZ       ORDO EZ -> ORDONEZ
+PATI O -> PATINO    ZU IGA -> ZUNIGA     BRICE O -> BRICENO
+CABA AS -> CABANAS  CUMPLEA OS -> CUMPLEANOS   ESPA OLA -> ESPANOLA
+LONDO O -> LONDONO  LAMBRA O -> LAMBRANO  COSTE O -> COSTENO
+```
+
+Apellidos panameños y colombianos partidos que **ninguna lista escrita a mano habria
+incluido**, porque no se le ocurren a nadie hasta que aparecen.
+
+### El precio de la guarda, dicho claro
+
+La segunda guarda deja fuera reconstrucciones validas: `SUE O -> SUENO`,
+`MONTA A -> MONTANA`, `URE A -> URENA`, `SALDA A -> SALDANA`, `TU ON -> TUNON`,
+`ALBA IL -> ALBANIL`. Todas correctas, todas descartadas porque el primer trozo
+(`SUE`, `MONTA`, `URE`, `TU`, `ALBA`) es frecuente por su cuenta.
+
+Se eligio la version estricta: **98 registros con precision del 100 % antes que 793
+con basura**. Es la leccion de D27 aplicada por adelantado — un sector o un nombre
+equivocado cuesta mas que un hueco, porque el hueco se ve y el error no.
+
+### Efecto medido
+
+| | Antes (D30) | Despues |
+|---|---:|---:|
+| Con sector CIIU | 196.205 | **196.224** |
+| Empleadores únicos (maestro) | 198.549 | **198.516** |
+
+33 duplicados menos en el maestro, sobre los 141 que ya habia quitado D30. El valor
+esta en la consolidacion, no en la cobertura.
+
+### Sobre el rendimiento decreciente
+
+Novena tirada, y la ganancia es de 19 registros de sector. Las cifras del ciclo:
+
+```
+D23 +1.859   D24 +676   D25 +1.859   D26 +3.476
+D27  −933    D28 +371   D29 +322     D30 +131   D31 +19
+```
+
+D28 y D29 ya dijeron que el vocabulario estaba agotado, y las tres ultimas tiradas lo
+confirman: **lo que queda no son huecos de conocimiento, son defectos del dato de
+origen**, y cada uno rinde menos que el anterior porque los grandes ya se taparon.
+
+El mecanismo de D31 vale mas por lo que es que por lo que rinde hoy: **no es una lista
+que envejece, es una regla que seguira reconstruyendo apellidos nuevos cuando llegue
+el proximo lote**. Ese es el criterio con el que conviene juzgarlo, no los 19 registros.
+
+---
+
 ## D30 - La otra columna del entregable, y un experimento que salio mal
 
 - **Fecha:** 2026-08-08

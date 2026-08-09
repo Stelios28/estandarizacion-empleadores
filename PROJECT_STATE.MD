@@ -7,7 +7,7 @@ con score de confianza y explicación por registro.
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo veintitrés correcciones (D8-D30). Solo queda la fase 7 (validación externa), que está
+produjo veinticuatro correcciones (D8-D31). Solo queda la fase 7 (validación externa), que está
 construida y probada en su ruta de estimación pero no ejecutada: requiere credencial.
 
 ## Misión activa
@@ -23,7 +23,7 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 | Empleadores identificados | 309.551 · 95,84 % |
 | Empleadores únicos (maestro) | 200.650 |
 | Consolidación de variantes | 35,5 % |
-| Con sector CIIU | 196.205 · 63,38 % de los empleadores |
+| Con sector CIIU | 196.224 · 63,39 % de los empleadores |
 | Confianza promedio / mediana | 51,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
@@ -78,6 +78,8 @@ verificación individual 130.960 (40,5 %).
   ciclo gratuito con +7.630 registros y 1.085 clasificaciones falsas retiradas
 - **D30** — Auditada la columna `nombre_propuesto`: la Ñ destruida partía palabras
   (`COMPA IA`, `PANAME A`) y duplicaba 141 empleadores en el maestro
+- **D31** — La misma reconstrucción derivada del corpus en vez de enumerada:
+  `NU EZ`→`NUNEZ`, `ORDO EZ`→`ORDONEZ`. Regla que no envejece, no lista
 
 ## Pendientes prioritarios
 - **Alta** — Decidido por negocio: los clústeres de una sola aparición no aportan al

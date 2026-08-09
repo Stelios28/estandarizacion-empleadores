@@ -64,7 +64,9 @@ def main() -> None:
                   % (len(df), corte, len(genericos)))
 
     with comun.Fase('fase 2-3 (pasada 2): claves con conciencia de tokens genéricos'):
-        registros = [normalizacion.normalizar(i, c, genericos)
+        # `df` viaja a la segunda pasada: es el diccionario con el que se
+        # reconstruyen las palabras que la Ñ destruida partió en dos (D31).
+        registros = [normalizacion.normalizar(i, c, genericos, df)
                      for i, c in enumerate(crudos)]
 
     with comun.Fase('fase 4: matching exacto sobre clave de núcleo'):

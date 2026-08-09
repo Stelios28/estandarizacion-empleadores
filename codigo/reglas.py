@@ -232,6 +232,54 @@ PALABRAS_PARTIDAS: list[tuple[re.Pattern, str, str]] = [
     (re.compile(r'\bU\s+AS\b'), 'UNAS', 'enye_UNAS'),
 ]
 
+# --- Y la misma reconstrucción, derivada del corpus (D31) -------------------
+# Las 27 reglas de arriba tapan las formas más frecuentes. Pero se midieron **873
+# fragmentos distintos**, y enumerarlos todos a mano sería la lista muerta que este
+# proyecto viene evitando desde D22.
+#
+# El corpus puede decirlo solo: si `COMPA` y `IA` van seguidos y `COMPANIA` existe
+# en el propio archivo escrita bien, la reconstrucción está probada por los datos.
+# Es el mismo principio que `calidad_ortografica` usa para elegir el canónico —la
+# frecuencia documental como diccionario— aplicado a un problema distinto.
+#
+# Lo que la deriva ataja y una lista no: apellidos panameños partidos que nadie
+# habría pensado en enumerar. `NU EZ`, `QUI ONES`, `ORDO EZ`, `IBA EZ`.
+_DF_MIN_ENYE = 3     # la forma reconstruida tiene que aparecer bien escrita 3+ veces
+_LARGO_MAX_COLA = 3  # `COMPA IA` sí; `PANAMA EXPRESS` no es una palabra partida
+
+# Ni el sufijo societario ni las partículas son trozos de palabra. Sin esta
+# guarda, `AMERICA S A` se unía en `AMERICANS` (126 registros), `CO SA` en
+# `CONSA` (71) y `MECO SA` en `MECONSA`: el `S A` del final se comía la palabra
+# anterior. Se arma al final del módulo, cuando ya existen los dos conjuntos.
+_NO_FRAGMENTO: set[str] = set()
+
+
+def reconstruir_enye(tokens: list[str], vocabulario: dict[str, int]) -> tuple[list[str], bool]:
+    """Une `COMPA`+`IA` en `COMPANIA` si el corpus respalda la forma completa."""
+    if len(tokens) < 2 or not vocabulario:
+        return tokens, False
+    salida, i, cambio = [], 0, False
+    while i < len(tokens):
+        if i + 1 < len(tokens):
+            a, b = tokens[i], tokens[i + 1]
+            entera = a + 'N' + b
+            if (len(a) >= 2 and 1 <= len(b) <= _LARGO_MAX_COLA
+                    and a not in _NO_FRAGMENTO and b not in _NO_FRAGMENTO
+                    and vocabulario.get(entera, 0) >= _DF_MIN_ENYE
+                    # Si el primer trozo ya es una palabra corriente, no es un
+                    # fragmento: `AMERICA S A` es «América, S.A.», y unirlo daba
+                    # `AMERICANS` en 126 registros. Un fragmento de verdad —`NU`
+                    # de `NUÑEZ`, `PANAME` de `PANAMEÑA`— es más raro que la
+                    # palabra entera, nunca al revés.
+                    and vocabulario.get(a, 0) <= vocabulario[entera]):
+                salida.append(entera)
+                i += 2
+                cambio = True
+                continue
+        salida.append(tokens[i])
+        i += 1
+    return salida, cambio
+
 # --- Truncación del origen -------------------------------------------------
 # El campo viene cortado a 30 caracteres, así que las palabras largas llegan sin
 # final: `INDEPENDIENT`, `INDEPENDIEN`, `JUBILADS`, `JUBILADACSS`. Enumerar cada
@@ -1955,3 +2003,10 @@ def por_prefijo_comercial(token: str) -> tuple[str, str, str, int] | None:
                 and len(token) >= len(prefijo) + _LARGO_MIN_PREFIJO):
             return seccion, division, etiqueta, peso
     return None
+
+
+# Se llena aquí, al final, cuando `SUFIJOS_SOCIETARIOS` y `STOPWORDS` ya existen.
+# Ver `reconstruir_enye` (D31).
+_NO_FRAGMENTO.update(SUFIJOS_SOCIETARIOS)
+_NO_FRAGMENTO.update(STOPWORDS)
+_NO_FRAGMENTO.update({'CO', 'CIA', 'INC', 'CORP', 'LTD', 'SA', 'S'})

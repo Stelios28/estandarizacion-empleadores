@@ -61,7 +61,7 @@ class Registro:
 # Fase 2 — limpieza
 # --------------------------------------------------------------------------
 
-def limpiar(crudo: str) -> tuple[str, list[str]]:
+def limpiar(crudo: str, vocabulario: dict[str, int] | None = None) -> tuple[str, list[str]]:
     """
     Quita el apóstrofe de exportación, normaliza a mayúsculas sin acentos, elimina
     caracteres no permitidos y colapsa espacios.
@@ -90,9 +90,6 @@ def limpiar(crudo: str) -> tuple[str, list[str]]:
     if colapsado != texto.strip():
         traza.append('espacios_colapsados')
 
-    # Siglas que el origen escribió con las letras sueltas. Se unen antes de
-    # tokenizar o quedan como dos tokens de una letra y la sigla se pierde:
-    # 196 registros escriben `P H MULTIPLAZA` y 957 escriben `PH MULTIPLAZA`.
     # Palabras que la Ñ destruida partió en dos (`COMPA IA`, `PANAME A`). Se
     # reconstruyen antes que nada: si no, el fragmento suelto contamina la
     # tokenización, el agrupamiento y el nombre canónico (D30).
@@ -102,24 +99,37 @@ def limpiar(crudo: str) -> tuple[str, list[str]]:
             colapsado = nuevo
             traza.append(marca)
 
+    # Y las que la lista no enumera, deducidas del propio corpus: si `NU` y `EZ`
+    # van seguidos y `NUNEZ` aparece bien escrito en el archivo, la reconstrucción
+    # está probada por los datos. Solo en la segunda pasada, cuando el vocabulario
+    # ya existe (D31).
+    if vocabulario:
+        unidos, hubo = reglas.reconstruir_enye(colapsado.split(), vocabulario)
+        if hubo:
+            colapsado = ' '.join(unidos)
+            traza.append('enye_reconstruida_por_corpus')
+
+    # Siglas que el origen escribió con las letras sueltas. Se unen antes de
+    # tokenizar o quedan como dos tokens de una letra y la sigla se pierde:
+    # 196 registros escriben `P H MULTIPLAZA` y 957 escriben `PH MULTIPLAZA`.
     for rx, reemplazo, marca in reglas.SIGLAS_SEPARADAS:
         nuevo = rx.sub(reemplazo, colapsado)
         if nuevo != colapsado:
             colapsado = nuevo
             traza.append(marca)
 
-    # El origen trunca a 30 caracteres: `INDEPENDIENT`, `JUBILADS`. Se completan
-    # aquí, antes de tokenizar, para que las tres capas de abajo —tipificación,
-    # situación laboral y sector— lo vean ya resuelto. Una sola corrección que
-    # sirve a las tres, en lugar de una lista de erratas por capa (D22).
-    # El sufijo societario pegado se separa antes que nada: `SPORTSWEARSA` tiene
-    # que volver a ser `SPORTSWEAR SA` para que las capas siguientes —truncación,
-    # erratas, catálogo— vean la palabra que hay debajo (D28).
+    # El sufijo societario pegado se separa aquí: `SPORTSWEARSA` tiene que volver
+    # a ser `SPORTSWEAR SA` para que las capas siguientes —truncación, erratas,
+    # catálogo— vean la palabra que hay debajo (D28).
     sueltos, hubo = reglas.separar_sufijo_pegado(colapsado.split())
     if hubo:
         colapsado = ' '.join(sueltos)
         traza.append('sufijo_societario_despegado')
 
+    # El origen trunca a 30 caracteres: `INDEPENDIENT`, `JUBILADS`. Se completan
+    # antes de tokenizar, para que las tres capas de abajo —tipificación,
+    # situación laboral y sector— lo vean ya resuelto. Una sola corrección que
+    # sirve a las tres, en lugar de una lista de erratas por capa (D22).
     completos, hubo = reglas.completar_truncadas(colapsado.split())
     if hubo:
         colapsado = ' '.join(completos)
@@ -392,7 +402,8 @@ def construir_clave(tokens: list[str], sufijo_numerico: str = '',
 # --------------------------------------------------------------------------
 
 def normalizar(idx: int, crudo: str,
-               genericos: frozenset[str] = frozenset()) -> Registro:
+               genericos: frozenset[str] = frozenset(),
+               vocabulario: dict[str, int] | None = None) -> Registro:
     """
     Aplica el pipeline de limpieza y tipificación a un único registro.
 
@@ -402,7 +413,7 @@ def normalizar(idx: int, crudo: str,
     """
     reg = Registro(idx=idx, original=crudo)
 
-    reg.limpio, traza = limpiar(crudo)
+    reg.limpio, traza = limpiar(crudo, vocabulario)
     for t in traza:
         reg.anotar(t)
 
