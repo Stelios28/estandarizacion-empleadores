@@ -221,6 +221,115 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D26 - El catalogo estaba escrito en español y media plaza trabaja en ingles
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** cuarta iteracion del muestreo. Esta vez, en lugar de leer nombres al
+  azar, se conto el vocabulario del residuo **ponderado por registros arrastrados**.
+
+### El hueco estructural
+
+Panama es plaza de servicios internacionales y una parte grande del residuo tiene el
+nombre en ingles. El catalogo CIIU de `reglas.py` se escribio casi todo en español,
+asi que `CLEAN`, `DESIGN`, `BAKERY`, `NAILS` o `GRAPHICS` no clasificaban nada.
+
+No es un olvido puntual: es un **sesgo de idioma** en la base de conocimiento, y por
+eso vale mas que las correcciones anteriores. Mide 3.058 registros.
+
+### Lo que NO entro, y por que importa
+
+El vocabulario ingles mas frecuente del residuo no dice actividad:
+
+```
+CORPORATION  1.445    CENTER  788    EXPRESS  557    STAR  289
+WORLD          284    STUDIO  243    PLUS     184    LAND  161
+```
+
+Son palabras de fantasia, como `PANAMA` o `INTERNATIONAL`. Meterlas habria inflado
+la cobertura con clasificaciones falsas. **La medicion mas util de esta tirada fue
+descubrir cuanto del residuo es intrinsecamente inclasificable por reglas**: la
+cabeza de la lista de frecuencias no contiene giros, contiene marcas.
+
+Solo entro lo que nombra un oficio:
+
+| Regla | Registros | Sección |
+|---|---:|---|
+| `DESIGN` / `DESING` / `DISENO` | 397 | M/74 |
+| `PRODUCCIONES` / `PRODUCTIONS` | 336 | J/59 |
+| `STUDIO` | 260 | M/74, peso 4 |
+| `NAILS` / `MANICURE` | 251 | S/96 |
+| `METALES` / `SOLDADURA` | 219 | C/25 |
+| `GRAPHICS` / `PRINTING` | 194 | C/18 |
+| `IMPORTACIONES` / `EXPORTACIONES` | 192 | G/46 |
+| `EVENTOS` / `EVENTS` | 191 | N/82 |
+| `CLEAN` / `CLEANING` / `JANITORIAL` | 156 | N/81 |
+| `HEALTH` / `CHIROPRACTIC` | 156 | Q/86 |
+| `COFFEE HOUSE` vs `COFFEE ROASTERS` | 136 | I/56 vs C/10 |
+| `CARS` / `RENT A CAR` | 130 | G/45 |
+| `BAKERY` / `PASTRY` | 84 | C/10 |
+| `ADVISORS` / `ADVISORY` | 68 | M/70 |
+| `DAY CARE` / `GUARDERIA` | 21 | P/85 |
+
+`LABORATORIO` a secas se dejo fuera otra vez: `LABORATORIO DE INYECCION DIESEL` es
+un taller, `LABORATORIO CLINICO` es salud y `LABORATORIOS X` suele ser farmaceutica.
+Entran solo las formas que desambiguan.
+
+### Tres errores que la prueba de humo atajo
+
+Se probaron 28 casos antes de correr el pipeline. Tres fallaron:
+
+**1. `PRODUCCION PANAMENA DE HIELO` clasificada como cine.** La regla nueva era
+`PRODUCCIONES` en plural —que es como se llama una productora audiovisual— y
+deliberadamente dejaba fuera el singular. Pero el **rescate morfologico** de D11 lo
+devolvia por detras: para esa capa, singular y plural son la misma palabra.
+
+Es el defecto mas instructivo de la tanda. **Una exclusion deliberada en el catalogo
+hay que repetirla en `MORFOLOGIA_EXCLUIDA`, o la capa de abajo la deshace.** Ya habia
+pasado con `LABORATORIO` en D11; volvio a pasar quince decisiones despues porque la
+relacion entre las dos listas no es evidente al leer ninguna de las dos.
+
+**2. `PANAMONTE INN AND SPA` clasificado como salon de belleza.** `SPA` y el
+alojamiento pesaban igual y gano el que se evaluo primero. Un hotel con spa es un
+hotel: lo resuelve la frase, que se evalua antes que los tokens.
+
+**3. `PANAMA METAL RECYCLING` como metalmecanica.** El reciclaje de chatarra es
+gestion de desechos (E/38), no fabricacion de productos de metal.
+
+### Efecto medido
+
+| | Antes (D25) | Despues |
+|---|---:|---:|
+| Con sector CIIU | 192.838 | **196.314** |
+| Cobertura sobre empleadores | 62,30 % | **63,42 %** |
+| Empleador sin sector | 122.694 | **119.299** |
+| Clusteres en la cola de la fase 7 | 87.162 | **84.437** |
+
+Es el mayor salto de las cuatro tiradas: **+3.476 registros**.
+
+### Lo que llevan las cuatro tiradas
+
+| | Antes de D23 | Ahora |
+|---|---:|---:|
+| Con sector CIIU | 189.454 | **196.314** |
+| Cobertura sobre empleadores | 61,26 % | **63,42 %** |
+| No identificable | 2.074 | **1.774** |
+| Clusteres a consultar | 89.9xx | **84.437** |
+
+**+6.860 registros con sector, sin gastar un dolar.** Y 2.725 clusteres menos en la
+cola de la fase 7, que son consultas que ya no se pagan.
+
+### Lo que dice sobre cuando parar
+
+Las cuatro tiradas rindieron 1.859, 676, 1.859 y 3.476 registros. No hay señal de
+agotamiento todavia, pero el conteo ponderado de esta tirada da el aviso: la cabeza
+de la lista de palabras no cubiertas ya son marcas, no giros. Cuando las diez
+palabras mas frecuentes del residuo sean todas `CORPORATION` y `EXPRESS`, el metodo
+determinista habra llegado a su limite y lo que quede sera, por definicion, trabajo
+para la fase 7.
+
+---
+
 ## D25 - Mirar la cabeza de la cola, no el residuo entero
 
 - **Fecha:** 2026-08-08

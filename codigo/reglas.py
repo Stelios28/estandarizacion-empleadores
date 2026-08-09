@@ -1127,6 +1127,71 @@ _regla('RAMA JUDICIAL|PALACIO LEGISLATIVO|ASAMBLEA NACIONAL|CONSEJO PROVINCIAL|'
        'TRIBUNAL ELECTORAL|REGISTRO PUBLICO', 'O', '84',
        'Administración pública y defensa', 9)
 
+# --- Vocabulario de actividad en inglés (D26) ------------------------------
+# Panamá es plaza de servicios internacionales y una parte grande del residuo
+# tiene el nombre en inglés. El catálogo estaba escrito casi todo en español, así
+# que `CLEAN`, `DESIGN`, `BAKERY` o `NAILS` no clasificaban nada.
+#
+# Importante: la mayoría del vocabulario inglés frecuente del residuo **no dice
+# actividad** —`CORPORATION` (1.445 registros), `CENTER` (788), `EXPRESS` (557),
+# `STAR`, `WORLD`, `PLUS`— y se dejó fuera por la misma razón que `PANAMA`: es
+# palabra de fantasía, no de giro. Solo entra lo que nombra un oficio.
+_regla('DESIGN|DESIGNS|DESING|DISENO|DISENOS|GRAPHIC DESIGN|INTERIOR DESIGN',
+       'M', '74', 'Otras actividades profesionales', 6)      # 397 registros
+_regla('PRODUCCIONES|PRODUCTIONS|PRODUCTORA AUDIOVISUAL', 'J', '59',
+       'Actividades cinematográficas y de producción', 7)    # 336
+# `PRODUCCION` en singular queda fuera a propósito: `PRODUCCION PANAMENA DE
+# HIELO` es una fábrica, no una productora audiovisual.
+_regla('NAILS|MANICURE|PEDICURE|SALON DE UNAS', 'S', '96',
+       'Otros servicios personales', 8)                      # 251 con SPA ya existente
+_regla('METALES|METALICA|METALMECANICA|SOLDADURA|SOLDADURAS|HERRERIA METALICA|'
+       'SCRAP METAL', 'C', '25',
+       'Fabricación de productos elaborados de metal', 6)    # 219
+_regla('GRAPHICS|PRINTING|PRINT SHOP|VISUAL PRINT', 'C', '18',
+       'Impresión y reproducción de grabaciones', 7)         # 194
+_regla('IMPORTACIONES|EXPORTACIONES|IMPORTACION|EXPORTACION|IMPORTS|EXPORTS',
+       'G', '46', 'Comercio al por mayor', 7)                # 192
+_regla('EVENTOS|EVENTS|BANQUETES|ORGANIZACION DE EVENTOS', 'N', '82',
+       'Actividades administrativas y de apoyo de oficina', 7)  # 191
+_regla('CLEAN|CLEANING|JANITORIAL|LIMPIEZA|ASEO INDUSTRIAL', 'N', '81',
+       'Actividades de servicios a edificios y paisajismo', 6)  # 156
+_regla('HEALTH|HEALTHCARE|MEDICAL CENTER|WELLNESS|CHIROPRACTIC', 'Q', '86',
+       'Actividades de atención de la salud humana', 6)      # 156
+# `LABORATORIO` a secas NO entra: `LABORATORIO DE INYECCION DIESEL` es un taller,
+# `LABORATORIO CLINICO` es salud y `LABORATORIOS X` suele ser farmacéutica. Es
+# genuinamente ambiguo — por eso está en MORFOLOGIA_EXCLUIDA desde D11. Entran
+# solo las formas que sí desambiguan.
+_regla('LABORATORIO CLINICO|LABORATORIO DE ANALISIS|ANALISIS CLINICOS',
+       'Q', '86', 'Actividades de atención de la salud humana', 8)
+_regla('LABORATORIOS FARMACEUTICOS|LABORATORIO FARMACEUTICO', 'C', '21',
+       'Fabricación de productos farmacéuticos', 8)
+_regla('CARS|CAR WASH|AUTOLAVADO|RENT A CAR|CAR RENTAL|RENTA CAR', 'G', '45',
+       'Comercio y reparación de vehículos', 7)              # 130
+_regla('COFFEE HOUSE|COFFEE SHOP|CASA DE CAFE', 'I', '56',
+       'Servicio de comidas y bebidas', 8)
+_regla('COFFEE ROASTERS|COFFEE ESTATES|TOSTADORA DE CAFE|BENEFICIO DE CAFE',
+       'C', '10', 'Elaboración de productos alimenticios', 8)  # 136 entre las dos
+_regla('BAKERY|PASTRY|PASTELERIA|BAKERS', 'C', '10',
+       'Elaboración de productos alimenticios', 8)           # 84
+_regla('ADVISORS|ADVISORY|CONSULTING GROUP', 'M', '70',
+       'Actividades de consultoría de gestión', 7)           # 68
+_regla('EQUIPMENT|SUPPLIES|EQUIPOS Y SUMINISTROS', 'G', '46',
+       'Comercio al por mayor', 6)                           # 63
+_regla('DAY CARE|DAYCARE|GUARDERIA|CUIDADO INFANTIL|PREESCOLAR|KINDER',
+       'P', '85', 'Enseñanza', 8)                            # 21
+# `STUDIO` es lo más ambiguo del lote —fotografía, diseño, grabación, yoga— así
+# que va con peso 4: suma cuando no hay nada mejor y pierde contra cualquier
+# palabra de oficio concreta.
+_regla('STUDIO|STUDIOS|ESTUDIO FOTOGRAFICO|PHOTO STUDIO|FOTOGRAFIA',
+       'M', '74', 'Otras actividades profesionales', 4)      # 260
+# Un hotel con spa es un hotel. `PANAMONTE INN AND SPA` caía en «otros servicios
+# personales» porque `SPA` y el alojamiento pesaban igual; la frase decide.
+_regla('INN AND SPA|HOTEL AND SPA|HOTEL Y SPA|RESORT AND SPA|INN', 'I', '55',
+       'Alojamiento', 8)
+# Reciclaje de chatarra es gestión de desechos, no metalmecánica.
+_regla('RECYCLING|RECICLAJE|RECICLADORA|RECICLADORES|CHATARRA|CHATARRERIA',
+       'E', '38', 'Recogida, tratamiento y eliminación de desechos', 8)
+
 FRASES_CIIU: list[str] = sorted(
     (k for k in REGLAS_CIIU if ' ' in k), key=len, reverse=True
 )
@@ -1475,7 +1540,13 @@ GAZETTEER: dict[str, tuple[str, str, str]] = {
 #                  diesel; «Laboratorios X» en plural sí suele ser farmacéutica.
 #                  El plural es el que lleva el sentido industrial.
 #   GUARDIA      — apellido y provincia, además de vigilante.
-MORFOLOGIA_EXCLUIDA: set[str] = {'LABORATORIO', 'GUARDIA'}
+# `PRODUCCION` entró en D26: la regla nueva es `PRODUCCIONES` en plural, que es
+# como se llama una productora audiovisual, y deliberadamente dejaba fuera el
+# singular. Pero el rescate morfológico lo devolvía por detrás —singular y plural
+# son la misma palabra para él— y `PRODUCCION PANAMENA DE HIELO`, que es una
+# fábrica, terminaba clasificada como cine. Una exclusión deliberada en el
+# catálogo hay que repetirla aquí, o esta capa la deshace.
+MORFOLOGIA_EXCLUIDA: set[str] = {'LABORATORIO', 'GUARDIA', 'PRODUCCION'}
 
 
 # ==========================================================================

@@ -7,7 +7,7 @@ con score de confianza y explicación por registro.
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo dieciocho correcciones (D8-D25). Solo queda la fase 7 (validación externa), que está
+produjo diecinueve correcciones (D8-D26). Solo queda la fase 7 (validación externa), que está
 construida y probada en su ruta de estimación pero no ejecutada: requiere credencial.
 
 ## Misión activa
@@ -23,7 +23,7 @@ Criterio de cierre: cobertura sectorial > 90 % y banda de confianza automática 
 | Empleadores identificados | 309.551 · 95,84 % |
 | Empleadores únicos (maestro) | 200.650 |
 | Consolidación de variantes | 35,5 % |
-| Con sector CIIU | 192.838 · 62,30 % de los empleadores |
+| Con sector CIIU | 196.314 · 63,42 % de los empleadores |
 | Confianza promedio / mediana | 51,8 / 53 |
 | Pares evaluados | 7,4 M de 30.446 M (0,024 %) |
 
@@ -68,6 +68,8 @@ verificación individual 130.960 (40,5 %).
   comerciales; `INTERAMERICANA` deja de ser token fuerte de dirección (58)
 - **D25** — Mirar la cabeza de la cola, no el residuo entero: multinacionales,
   casas comerciales panameñas y bufetes (1.859 registros que la fase 7 pagaría)
+- **D26** — Sesgo de idioma: el catálogo estaba en español y media plaza trabaja
+  en inglés (`CLEAN`, `DESIGN`, `BAKERY`, `NAILS`) — 3.476 registros
 
 ## Pendientes prioritarios
 - **Alta** — Decidido por negocio: los clústeres de una sola aparición no aportan al
