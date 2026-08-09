@@ -221,6 +221,97 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D29 - El ultimo bloque sin auditar, y el cierre del ciclo gratuito
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** septima iteracion. D28 declaro agotado el vocabulario del residuo de
+  empleadores; quedaba un bloque entero que nunca se habia auditado.
+
+### El bloque de situacion laboral
+
+11.676 registros: independientes, jubilados, estudiantes, amas de casa. Desde D18 y
+D19 se les recupera el sector cuando el texto lo trae —`PANAMA CANAL COMMISSION
+JUBILADO` vive del canal, `INDEPENDIENTE AGRIMENSURA` de la agrimensura—, pero
+**nunca se habia mirado que quedaba fuera**. 5.652 sin sector.
+
+Rindio **176 registros, el 3 %**. Es la confirmacion practica de lo que D28 anuncio
+contando palabras: tampoco aqui quedan grandes agrupaciones.
+
+### Lo que si tenia volumen
+
+| Familia | Registros | Sección |
+|---|---:|---|
+| Pensión de gobierno extranjero | 53 | U/99 |
+| Nivel educativo del estudiante | 42 | P/85 |
+| Puesto de frutas y verduras | 28 | G/47 |
+| Bus colegial | 17 | H/49 |
+| Venta por catálogo (Avon, Yanbal) | 13 | G/47 |
+| Salonero, terapeuta, piscicultor | 23 | varias |
+
+La pension extranjera es la mas interesante como dato de negocio: 53 panamenos que
+cobran del gobierno de Estados Unidos o de Canada, casi todos ex-empleados de la
+antigua Zona del Canal.
+
+```
+JUBILADO GOB EEUU        JUBILADO FEDERAL DEL GOB DE EE    GOB USA JUBILADO
+TESORO DE LOS EEUU JUBILADO      JUBILADO GOBCANADIENSE     PENSIONADO DEL CANAL
+```
+
+`BUS COLEGIAL` es el transporte escolar panameno. `COLEGIAL` a secas se dejo fuera:
+tambien es el alumno.
+
+**Estos 176 registros no estaban en la cola de la fase 7** —no son empleadores
+corporativos— asi que no habrian llegado nunca por la via de pago. Solo se podian
+ganar aqui.
+
+### Efecto medido
+
+| | Antes (D28) | Despues |
+|---|---:|---:|
+| Con sector CIIU | 195.752 | **196.074** |
+| Cobertura sobre empleadores | 63,24 % | **63,34 %** |
+
+### Balance del ciclo completo
+
+Siete tiradas, D23 a D29:
+
+| # | Enfoque | Registros |
+|---|---|---:|
+| D23 | Aleatorio uniforme | +1.859 |
+| D24 | Aleatorio uniforme, otra semilla | +676 |
+| D25 | Cabeza de la cola por volumen | +1.859 |
+| D26 | Conteo de vocabulario ponderado | +3.476 |
+| D27 | Auditoria de lo clasificado | **−933** (1.085 falsas retiradas) |
+| D28 | Cierre de R13 + residuos | +371 |
+| D29 | Bloque de situacion laboral | +322 |
+
+**+7.630 registros con sector y 1.085 clasificaciones falsas retiradas, sin gastar un
+dolar.** Cobertura de 61,26 % a **63,34 %** de los empleadores.
+
+### Por que esta es la ultima tirada gratuita
+
+Tres senales independientes, todas medidas:
+
+1. **El vocabulario no cubierto ya no nombra actividades.** Las trece palabras mas
+   frecuentes del residuo, ponderadas por registros, son `CORPORATION`, `CENTRO`,
+   `CENTER`, `EXPRESS`, `LATIN`, `COLOMBIA`, `VENEZUELA`, `FAMILIA`, `CENTRAL`,
+   `LTDA`, `LIMITED`, `STAR` y `WORLD` (D28).
+2. **El rendimiento por tirada cayo un orden de magnitud**, de 1.859 a ~350.
+3. **El ultimo bloque sin auditar rindio un 3 %**, no un 30 %.
+
+Y una senal de riesgo: D27 encontro que dos de los cuatro defectos de clasificacion
+mas graves los habia introducido **la tirada inmediatamente anterior**. Seguir
+anadiendo reglas sobre un residuo que ya no las admite empieza a costar precision en
+lugar de ganarla.
+
+**Lo que queda —84.716 clusteres— no se puede resolver leyendo el texto, porque el
+texto no lo dice.** `R P CORPORATION S A` no revela su actividad a ninguna regla. Ese
+es exactamente el problema que la fase 7 compra resuelto, y el motivo por el que
+existe desde el diseno original (D2).
+
+---
+
 ## D28 - R13 cerrado, y el metodo deterministico toca su limite
 
 - **Fecha:** 2026-08-08

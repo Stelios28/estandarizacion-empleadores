@@ -1252,6 +1252,37 @@ _regla('CRANE|CRANES', 'H', '52',
        'Almacenamiento y actividades de apoyo al transporte', 7)
 # `TRADING` estaba y `TRADE` no. 191 registros por una `-ING` (D28).
 _regla('TRADE|TRADERS', 'G', '46', 'Comercio al por mayor', 6)
+# --- Vocabulario del bloque de situación laboral (D29) ---------------------
+# Único bloque que nunca se había auditado: 5.652 registros de independientes y
+# jubilados sin sector. Rindió 176 —el 3 %—, que es la confirmación práctica de lo
+# que D28 anunció. Se recogen solo las familias con volumen.
+#
+# La pensión extranjera es la mayor: 53 registros de panameños que cobran del
+# gobierno de Estados Unidos o de Canadá, casi todos ex-empleados de la antigua
+# Zona del Canal. La actividad de la que viven es un organismo extraterritorial.
+_regla('GOB USA|GOB EEUU|GOB AMERICANO|GOBIERNO AMERICANO|GOB AMERICA|'
+       'TESORO DE LOS EEUU|SOCIAL SECURITY|SEGURO SOCIAL AMERICANO|'
+       'GOB CANADIENSE|GOBIERNO CANADIENSE|GOBIERNO DE LOS ESTADOS UNIDOS',
+       'U', '99', 'Organizaciones y órganos extraterritoriales', 8)
+# El nivel educativo que declara el estudiante dice dónde estudia.
+_regla('ESTUDIANTE UNIVERSITARIO|ESTUDIANTE UNIVERSITARIA|ESTUDIANTE SECUNDARIA|'
+       'ESTUDIANTE PRIMARIA|ESTUDIANTE DE SECUNDARIA|ESTUDIANTE DE PRIMARIA|'
+       'ESTUDIANTE DE UNIVERSIDAD', 'P', '85', 'Enseñanza', 7)
+# El puesto de frutas y verduras del mercado.
+_regla('LEGUMBRES|VERDURAS|HORTALIZAS|PLATANOS|VIVERES|ABARROTES',
+       'G', '47', 'Comercio al por menor', 7)
+# `BUS COLEGIAL` es el transporte escolar panameño. `COLEGIAL` a secas NO entra:
+# también es el alumno.
+_regla('BUS COLEGIAL|BUSITO COLEGIAL|TRANSPORTE ESCOLAR|BUS ESCOLAR|'
+       'BUSITO ESCOLAR', 'H', '49', 'Transporte terrestre', 8)
+# Venta directa por catálogo: la marca identifica el canal.
+_regla('AVON|YANBAL|NATURA COSMETICOS|HERBALIFE|OMNILIFE|TUPPERWARE|'
+       'VENTA POR CATALOGO', 'G', '47', 'Comercio al por menor', 7)
+_regla('SALONERO|SALONERA|MESERO|MESERA', 'I', '56',
+       'Servicio de comidas y bebidas', 7)
+_regla('TERAPEUTA|FISIOTERAPIA|TERAPIA RESPIRATORIA', 'Q', '86',
+       'Actividades de atención de la salud humana', 7)
+
 # La piquera es la parada de taxis del barrio. Salió auditando la propagación:
 # `PIQUERA DEL VALLE DE URRACA` heredaba «enseñanza» de una escuela del mismo
 # valle, que era el único caso de herencia claramente equivocada de los 783.
