@@ -279,3 +279,20 @@ def etiqueta(seccion: str, division: str) -> str:
 def vista_ejecutiva(seccion: str) -> str:
     """Agregación de secciones CIIU para la presentación ejecutiva."""
     return reglas.AGREGADO_EJECUTIVO.get(seccion, 'Sin clasificar')
+
+
+def macrosector(seccion: str) -> str:
+    """
+    Nivel superior de la jerarquía CIIU: la sección a la que pertenece la división.
+
+    `sector_propuesto` es la **división** (dos dígitos): «Comercio al por menor».
+    El macrosector es su padre en la clasificación oficial: «Comercio al por mayor
+    y al por menor». Son 21 secciones para 67 divisiones, así que agrupa a un
+    tercio del detalle sin inventar ninguna categoría (D33).
+
+    No se usó `vista_ejecutiva` para esto a propósito: esa es una agregación de
+    negocio —junta `D` y `E` en «Energía y servicios públicos»— y responde a cómo
+    lee el comité, no a la jerarquía de la CIIU. Las dos conviven: `macrosector`
+    para el análisis, `vista_ejecutiva` para la presentación.
+    """
+    return reglas.SECCIONES_CIIU.get(seccion, '')

@@ -10,7 +10,7 @@ El dataset de origen **no** está versionado: es cartera de clientes de un banco
 
 ## Estado global
 Entregable completo y ejecutado. Cerrado un ciclo de revisión de calidad con Javier que
-produjo **veinticinco correcciones (D8-D32)**. Solo queda la fase 7 (validación externa),
+produjo **veintiséis correcciones (D8-D33)**. Solo queda la fase 7 (validación externa),
 que está construida, auditada en seco y probada en su ruta de estimación, pero **nunca
 ejecutada**: requiere credencial.
 
@@ -92,6 +92,8 @@ Si un `.xlsx` de `salidas/` está abierto en Excel, la fase 5 avisa y sigue (D25
   `NU EZ`→`NUNEZ`, `ORDO EZ`→`ORDONEZ`. Regla que no envejece, no lista
 - **D32** — Auditada la fase 7 en seco, antes de gastar: el prompt enumera el catálogo
   pero el código no verificaba la respuesta contra él
+- **D33** — `nombre_propuesto` en mayúscula sostenida (excepción del entregable, no
+  del proyecto) y columna `macrosector` = sección CIIU, padre de la división
 
 ## Pendientes prioritarios
 - **Bloqueante** — `ANTHROPIC_API_KEY` para ejecutar la fase 7

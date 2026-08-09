@@ -221,6 +221,102 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D33 - Mayuscula sostenida en el entregable y jerarquia de sector
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** dos peticiones de Javier: *«el campo nombre_propuesto su contenido sera
+  todo en mayuscula sostenida, eso va en contra de una politica del proyecto pero sera
+  una excepcion solo para este campo»* y *«al campo sector_propuesto crea uno que se
+  llame macrosector que agrupe un poco mas sector_propuesto tipo jerarquia»*.
+
+### La excepcion de capitalizacion, acotada a donde toca
+
+El proyecto capitaliza los nombres en español desde el principio —`Caja de Seguro
+Social`, `HSBC Bank Panama`— y esa regla **sigue vigente**. Lo que cambia es una sola
+columna de un solo entregable.
+
+Javier fue explicito en que es una excepcion, y el motivo es de integracion: el
+resultado se cruza contra otros sistemas del banco que guardan los nombres en
+mayuscula sostenida, y **una comparacion que falla por la caja es una comparacion que
+falla**.
+
+La excepcion se implemento en el **borde de salida** (`nombre_entregable()` en
+`05_salida.py`), no dentro de `canonico.capitalizar()`. La diferencia importa:
+
+- El nombre bien capitalizado se sigue calculando y se sigue usando en el maestro
+  corporativo, en la traza y en los informes.
+- Si mañana el requisito cambia o aparece un segundo consumidor con otra convencion,
+  se toca una funcion de dos lineas y no el motor.
+
+**Una excepcion se pone en el borde, no en el nucleo.** Si `capitalizar()` devolviera
+mayusculas, el proyecto habria perdido la capacidad de producir la otra forma.
+
+### El macrosector es la seccion CIIU, no una categoria inventada
+
+`sector_propuesto` es la **division** de la CIIU (dos digitos): «Comercio al por
+menor», «Transporte maritimo». Su padre en la clasificacion oficial es la **seccion**
+(una letra): «Comercio al por mayor y al por menor», «Transporte y almacenamiento».
+
+Eso es exactamente la jerarquia que se pidio, y tiene una ventaja sobre cualquier
+agrupacion propia: **no hay que defenderla**. Es la CIIU Rev. 4.
+
+Agrupa 67 divisiones en 21 secciones.
+
+### Por que no se reutilizo `vista_ejecutiva`
+
+Ya existia una agregacion —`AGREGADO_EJECUTIVO`, 17 categorias— y la tentacion era
+usarla. No se hizo, y conviene dejar escrito el motivo: **esa agregacion responde a
+como lee el comite, no a la jerarquia de la CIIU**. Junta `D` (electricidad) y `E`
+(agua) en «Energia y servicios publicos» porque para riesgo de cartera se comportan
+igual, y separa `M` de `N` con nombres de negocio.
+
+Son dos cosas distintas y ahora conviven: `macrosector` para el analisis y el cruce
+con otros sistemas, `vista_ejecutiva` para la presentacion. Mezclarlas habria hecho
+que un cambio de gusto en la presentacion moviera la jerarquia del dato.
+
+### La columna nunca queda vacia
+
+Un macrosector en blanco obligaria a filtrar antes de agrupar. En vez de eso, cuando
+no hay seccion CIIU la columna **dice por que no la hay**, que es informacion distinta
+segun el caso:
+
+| Macrosector | Registros | Que significa |
+|---|---:|---|
+| `Pendiente de validación externa` | 119.492 | Empleador identificado, falta la actividad → fase 7 |
+| `Sin vínculo laboral corporativo` | 5.514 | Independiente, jubilado, ama de casa sin actividad declarada |
+| `No identificable` | 1.771 | Direcciones, cadenas vacías |
+
+Con eso, **el 100 % de las 323.001 filas tiene macrosector** y el dataset se agrupa
+entero sin filtros previos.
+
+### Distribucion resultante
+
+```
+Pendiente de validación externa                   119.492   37,0 %
+Comercio al por mayor y al por menor               38.396   11,9 %
+Actividades de servicios administrativos            33.880   10,5 %
+Actividades profesionales, científicas y técnicas   13.528    4,2 %
+Enseñanza                                           12.324    3,8 %
+Transporte y almacenamiento                         11.654    3,6 %
+```
+
+24 valores distintos, frente a los 67 de `sector_propuesto`.
+
+### Verificacion
+
+| Comprobacion | Resultado |
+|---|---|
+| Registros en el entregable | 323.001 |
+| `nombre_propuesto` fuera de mayuscula sostenida | **0** |
+| `macrosector` vacio | **0** |
+| Columnas | `nombre_original`, `nombre_propuesto`, `sector_propuesto`, `macrosector` |
+
+El maestro corporativo tambien estrena la columna, y **conserva el nombre bien
+capitalizado**: la mayuscula sostenida es del entregable, no del proyecto.
+
+---
+
 ## D32 - Auditar la fase 7 antes de pagarla
 
 - **Fecha:** 2026-08-08

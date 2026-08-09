@@ -4,7 +4,8 @@ Bloque 5 — Fases 10 y 12: score de confianza y tablas auditables.
 
 Genera los entregables:
 
-  salidas/dataset_resultado.csv      nombre_original, nombre_propuesto, sector_propuesto
+  salidas/dataset_resultado.csv      nombre_original, nombre_propuesto,
+                                     sector_propuesto, macrosector
   salidas/dataset_resultado.xlsx     el mismo dataset, para abrir sin fricción
   salidas/tabla_auditoria.csv.gz     una fila por registro con toda la traza
   salidas/maestro_corporativo.csv    una fila por empleador único
@@ -37,6 +38,38 @@ TIPOS_EMPLEADOR = {'EMPRESA', 'PERSONA_NATURAL'}
 # durante el ciclo de revisión, siempre por tener el entregable abierto para
 # mirarlo. Un archivo bloqueado es un aviso, no un fallo del pipeline (D25).
 _EXCEL_OMITIDOS: list[str] = []
+
+
+# --- Excepción deliberada a la política de capitalización (D33) -------------
+# El proyecto capitaliza los nombres propios en español —`Caja de Seguro Social`,
+# `HSBC Bank Panamá`— y esa regla sigue vigente en el maestro, la traza y los
+# informes. Pero el entregable se cruza contra otros sistemas del banco, que
+# guardan los nombres en mayúscula sostenida, y una comparación que falla por la
+# caja es una comparación que falla.
+#
+# La excepción es de **una sola columna** y está aquí, en el borde de salida, no
+# en `canonico.capitalizar()`: el nombre bien capitalizado se sigue calculando y
+# se sigue usando en todo lo demás.
+def nombre_entregable(nombre: str) -> str:
+    """`nombre_propuesto` en mayúscula sostenida, solo para el dataset de salida."""
+    return nombre.upper()
+
+
+def macrosector_de(seccion: str, tipo: str, nombre: str) -> str:
+    """
+    Padre jerárquico de `sector_propuesto`, con valor para el 100 % de las filas.
+
+    Cuando hay sección CIIU es la sección. Cuando no la hay, la columna no se deja
+    vacía: dice **por qué** no la hay, que es información distinta según el caso y
+    permite agrupar el dataset entero sin filtros adicionales.
+    """
+    if seccion:
+        return sector_mod.macrosector(seccion)
+    if tipo in TIPOS_EMPLEADOR:
+        return reglas.SECTOR_PENDIENTE
+    if nombre.startswith('No identificable'):
+        return 'No identificable'
+    return 'Sin vínculo laboral corporativo'
 
 
 def guardar_excel(wb, nombre: str) -> bool:
@@ -131,7 +164,8 @@ def main() -> None:
                         seccion, division = s_, d_
                         sec = sector_mod.etiqueta(s_, d_)
                         vista = sector_mod.vista_ejecutiva(s_)
-                dataset.append((original, nombre, sec))
+                dataset.append((original, nombre_entregable(nombre), sec,
+                                macrosector_de(seccion, tipo, nombre)))
                 auditoria.append([
                     original, fila['limpio'], nombre, sec, seccion, division, vista,
                     score, confianza.banda(score), tipo, '', '',
@@ -185,7 +219,8 @@ def main() -> None:
             if not seccion:
                 sec_etiqueta = reglas.SECTOR_PENDIENTE
 
-            dataset.append((original, nombre, sec_etiqueta))
+            dataset.append((original, nombre_entregable(nombre), sec_etiqueta,
+                            macrosector_de(seccion, tipo, nombre)))
             auditoria.append([
                 original, fila['limpio'], nombre, sec_etiqueta, seccion, division,
                 sector_mod.vista_ejecutiva(seccion) if seccion else 'Sin clasificar',
@@ -196,7 +231,11 @@ def main() -> None:
             scores.append(score)
 
             if cid not in maestro:
+                # El maestro conserva el nombre bien capitalizado: la mayúscula
+                # sostenida es una excepción del entregable, no de todo el
+                # proyecto (D33).
                 maestro[cid] = [cid, nombre, seccion, division, sec_etiqueta,
+                                macrosector_de(seccion, tipo, nombre),
                                 sector_mod.vista_ejecutiva(seccion) if seccion else 'Sin clasificar',
                                 c['n_claves'], c['n_registros'], score,
                                 confianza.banda(score), origen_nombre, origen_sector]
@@ -204,7 +243,7 @@ def main() -> None:
     with comun.Fase('escribir entregables'):
         comun.escribir_csv(
             os.path.join(comun.DIR_SALIDAS, 'dataset_resultado.csv'),
-            ['nombre_original', 'nombre_propuesto', 'sector_propuesto'],
+            ['nombre_original', 'nombre_propuesto', 'sector_propuesto', 'macrosector'],
             dataset,
         )
         comun.escribir_csv(
@@ -218,16 +257,16 @@ def main() -> None:
         comun.escribir_csv(
             os.path.join(comun.DIR_SALIDAS, 'maestro_corporativo.csv'),
             ['id_empleador', 'nombre_canonico', 'seccion_ciiu', 'division_ciiu',
-             'sector', 'vista_ejecutiva', 'variantes', 'registros', 'confianza',
-             'banda_confianza', 'origen_nombre', 'origen_sector'],
-            sorted(maestro.values(), key=lambda m: -int(m[7])),
+             'sector', 'macrosector', 'vista_ejecutiva', 'variantes', 'registros',
+             'confianza', 'banda_confianza', 'origen_nombre', 'origen_sector'],
+            sorted(maestro.values(), key=lambda m: -int(m[8])),
         )
 
     with comun.Fase('escribir dataset en Excel'):
         import openpyxl
         wb = openpyxl.Workbook(write_only=True)
         ws = wb.create_sheet('resultado')
-        ws.append(['nombre_original', 'nombre_propuesto', 'sector_propuesto'])
+        ws.append(['nombre_original', 'nombre_propuesto', 'sector_propuesto', 'macrosector'])
         for fila in dataset:
             ws.append(list(fila))
         guardar_excel(wb, 'dataset_resultado.xlsx')
