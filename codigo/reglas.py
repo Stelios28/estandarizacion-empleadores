@@ -191,6 +191,47 @@ SIGLAS_SEPARADAS: list[tuple[re.Pattern, str, str]] = [
     (re.compile(r'^M\s+S\b'), 'MINISUPER', 'sigla_MS_minisuper'),
 ]
 
+# --- Palabras partidas por la Ñ destruida aguas arriba (D30) ----------------
+# El sistema de origen elimino la Ñ y dejo un hueco, partiendo la palabra en dos:
+# `COMPAÑIA` llega como `COMPA IA` y `PANAMEÑA` como `PANAME A`. El fragmento
+# suelto no coincide con nada y el nombre canonico sale como `Assa Compa Ia de
+# Seguros`.
+#
+# Se enumeran las **reconstrucciones**, no el patron. Un patron general
+# —«token corto suelto tras una palabra»— captura `RENT A HOUSE`, `TODO A DOLLAR`,
+# `POLLO A LA LEÑA` y las iniciales de segundo nombre (`HOSPITAL MANUEL A
+# GUERRERO`), que estan bien escritas. Es la leccion de D22 aplicada: enumerar el
+# destino escala, enumerar el patron no.
+PALABRAS_PARTIDAS: list[tuple[re.Pattern, str, str]] = [
+    (re.compile(r'\bCOMPA\s+IA\b'), 'COMPANIA', 'enye_COMPANIA'),
+    (re.compile(r'\bCOMPAN\s+A\b'), 'COMPANIA', 'enye_COMPANIA'),
+    (re.compile(r'\bCOMPA\s+A\b'), 'COMPANIA', 'enye_COMPANIA'),
+    (re.compile(r'\bPANAME\s+AS\b'), 'PANAMENAS', 'enye_PANAMENA'),
+    (re.compile(r'\bPANAME\s+OS\b'), 'PANAMENOS', 'enye_PANAMENA'),
+    (re.compile(r'\bPANAME\s+A\b'), 'PANAMENA', 'enye_PANAMENA'),
+    (re.compile(r'\bPANAME\s+O\b'), 'PANAMENO', 'enye_PANAMENA'),
+    (re.compile(r'\bDISE\s+OS\b'), 'DISENOS', 'enye_DISENO'),
+    (re.compile(r'\bDISE\s+O\b'), 'DISENO', 'enye_DISENO'),
+    (re.compile(r'\bEMPE\s+OS\b'), 'EMPENOS', 'enye_EMPENO'),
+    (re.compile(r'\bEMPE\s+O\b'), 'EMPENO', 'enye_EMPENO'),
+    (re.compile(r'\bESPA\s+A\b'), 'ESPANA', 'enye_ESPANA'),
+    (re.compile(r'\bCEDE\s+O\b'), 'CEDENO', 'enye_CEDENO'),
+    (re.compile(r'\bISTME\s+A\b'), 'ISTMENA', 'enye_ISTMENA'),
+    (re.compile(r'\bISTME\s+O\b'), 'ISTMENO', 'enye_ISTMENA'),
+    (re.compile(r'\bDUE\s+O\b'), 'DUENO', 'enye_DUENO'),
+    (re.compile(r'\bDUE\s+A\b'), 'DUENA', 'enye_DUENO'),
+    (re.compile(r'\bA\s+OS\b'), 'ANOS', 'enye_ANOS'),
+    (re.compile(r'\bNI\s+OS\b'), 'NINOS', 'enye_NINOS'),
+    (re.compile(r'\bNI\s+A\b'), 'NINA', 'enye_NINOS'),
+    (re.compile(r'\bSE\s+OR\b'), 'SENOR', 'enye_SENOR'),
+    (re.compile(r'\bSE\s+ORA\b'), 'SENORA', 'enye_SENOR'),
+    (re.compile(r'\bCA\s+A\b'), 'CANA', 'enye_CANA'),
+    (re.compile(r'\bMU\s+OZ\b'), 'MUNOZ', 'enye_MUNOZ'),
+    (re.compile(r'\bPE\s+A\b'), 'PENA', 'enye_PENA'),
+    (re.compile(r'\bCASTA\s+EDA\b'), 'CASTANEDA', 'enye_CASTANEDA'),
+    (re.compile(r'\bU\s+AS\b'), 'UNAS', 'enye_UNAS'),
+]
+
 # --- Truncación del origen -------------------------------------------------
 # El campo viene cortado a 30 caracteres, así que las palabras largas llegan sin
 # final: `INDEPENDIENT`, `INDEPENDIEN`, `JUBILADS`, `JUBILADACSS`. Enumerar cada

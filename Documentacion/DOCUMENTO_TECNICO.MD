@@ -18,7 +18,7 @@ cada decisión.
 | Empleadores identificados | 309.551 · **95,84 %** |
 | Empleadores únicos en el maestro | 200.650 |
 | Consolidación de variantes | **35,4 %** |
-| Con sector CIIU asignado | 196.074 · **63,3 %** de los empleadores |
+| Con sector CIIU asignado | 196.205 · **63,4 %** de los empleadores |
 | Tiempo total de ejecución | **~2 minutos** en un portátil |
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 
@@ -651,7 +651,11 @@ Lo que este pipeline **no** puede saber, y por qué:
 3. **Si el empleador está activo.** Requiere Registro Público.
 4. **El sector real de los 84.716 clústeres sin evidencia interna.** Requiere la
    fase 7 o una fuente externa.
-5. **Tildes y eñes.** Destruidas aguas arriba de forma irreversible.
+5. **Tildes y eñes.** Destruidas aguas arriba de forma irreversible. Medido en
+   D30: la Ñ no solo se perdió, dejó un hueco que **partió la palabra en dos**
+   (`COMPAÑIA` → `COMPA IA`, 191 registros). 2.280 ocurrencias y al menos 141
+   empleadores duplicados en el maestro. Se reconstruyen las 27 formas más
+   frecuentes; la solución de fondo es pedir el campo sin esa transformación.
 
 Cada una de estas limitaciones tiene una acción asociada en §8.1 o §8.3. Ninguna se
 resuelve con más procesamiento sobre el mismo archivo.

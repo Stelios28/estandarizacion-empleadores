@@ -128,6 +128,35 @@ def calidad_ortografica(tokens: list[str], df: dict[str, int]) -> int:
     return peor.bit_length()          # log2 aproximado, monótono y barato
 
 
+# --- Un desempate por suma de frecuencias: probado y descartado (D30) -------
+#
+# `calidad_ortografica` mira el **mínimo**, y eso resuelve el caso en que una
+# variante está limpia del todo. Cuando todas traen algún token raro, todas
+# empatan y el desempate cae en «la más larga», que a veces premia la errata:
+#
+#     ADMINISTRACION DE APARTITELES    (29)  <- se descartaba
+#     ADMINISTRACIONN DE APARTOTELES   (30)  <- ganaba, con dos enes
+#
+# Se probó sumar el respaldo de todos los tokens en lugar de tomar el peor. Movió
+# 9.947 registros y el saldo fue **negativo**:
+#
+#   Assa Compa Ia de Seguros  -> ASSA Compañía de Seguros, S.A.   mejor
+#   Cab Le Onda               -> Cable Onda, S.A.                 mejor
+#   Franquicias Panameñas SA  -> Franquicias Panamena             PEOR: pierde el gazetteer
+#   Tetra Pak Panamá          -> Tetra Park                       PEOR: pierde el gazetteer
+#   Produccion Panamena Hielo -> Productos Panamena de Hielo       PEOR: cambia el sentido
+#   American Sportswear       -> America Sportswear                PEOR
+#
+# **La suma de frecuencias no mide «bien escrito», mide «usa palabras comunes».**
+# `PRODUCTOS` es más frecuente que `PRODUCCION` y `AMERICA` más que `AMERICAN`, así
+# que la variante equivocada gana en cuanto sus palabras son más corrientes.
+#
+# Lo que sí es un defecto real, y queda anotado como **R14**: las mejores mejoras
+# del experimento —`Compa Ia`, `Cab Le`, `Paname a`— son variantes con la palabra
+# **partida por la eliminación de la Ñ** en la fase 1. Eso se arregla reparando el
+# token partido, no cambiando el criterio de selección.
+
+
 def elegir_representante(variantes: list[dict],
                          df: dict[str, int] | None = None) -> dict:
     """
@@ -143,6 +172,9 @@ def elegir_representante(variantes: list[dict],
       4. Traer sufijo societario.
       5. Ser más larga.
       6. Orden alfabético, para que el resultado sea determinístico entre corridas.
+
+    Se probó insertar un criterio de «respaldo ortográfico en conjunto» entre el 2
+    y el 3, y se descartó con evidencia: ver la nota sobre D30 arriba.
     """
     df = df or {}
 

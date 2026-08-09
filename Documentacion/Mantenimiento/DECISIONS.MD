@@ -221,6 +221,113 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D30 - La otra columna del entregable, y un experimento que salio mal
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** octava iteracion. Las siete anteriores auditaron `sector_propuesto`.
+  El entregable tiene tres columnas y la del medio —`nombre_propuesto`— no la habia
+  revisado nadie.
+
+### La reconstruccion esta sana, con un patron de fallo claro
+
+194.853 nombres canonicos. Los que mas consolidan estan bien:
+
+```
+[1190] Caja de Seguro Social       [522] Ministerio de Educación
+[ 366] Ministerio de Salud         [221] Policía Nacional de Panamá
+[ 165] Maersk Panamá, S.A.         [150] Smithsonian Tropical Research Institute
+```
+
+Pero al muestrear los de 3-12 variantes aparecen nombres rotos, y casi todos por la
+misma causa:
+
+```
+Assa Compa Ia de Seguros        Industria Paname a de Papel
+Cab Le Onda                     Administracionn de Apartoteles
+```
+
+### El experimento: sumar el respaldo en lugar de tomar el peor token
+
+`calidad_ortografica` mide cuan bien escrita esta una variante tomando el **minimo**
+respaldo de sus tokens: una sola errata la descalifica. Eso resuelve el caso en que
+alguna variante esta limpia del todo. Pero cuando **todas** traen algo raro, todas
+empatan y el desempate cae en «la mas larga», que a veces premia la errata:
+
+```
+ADMINISTRACION DE APARTITELES    (29 caracteres)  <- se descartaba
+ADMINISTRACIONN DE APARTOTELES   (30 caracteres)  <- ganaba, con dos enes
+```
+
+Se probo sumar el respaldo de todos los tokens en vez de tomar el peor. Movio **9.947
+registros**. Saldo:
+
+| Antes | Despues | |
+|---|---|---|
+| `Assa Compa Ia de Seguros` | `ASSA Compañía de Seguros, S.A.` | mejor |
+| `Cab Le Onda` | `Cable Onda, S.A.` | mejor |
+| `Franquicias Panameñas, S.A.` | `Franquicias Panamena` | **peor — pierde el gazetteer** |
+| `Tetra Pak Panamá` | `Tetra Park` | **peor — pierde el gazetteer** |
+| `Produccion Panamena de Hielo` | `Productos Panamena de Hielo` | **peor — cambia el sentido** |
+| `American Sportswear` | `America Sportswear` | **peor** |
+
+**Revertido.** La suma de frecuencias no mide «bien escrito», mide «usa palabras
+comunes»: `PRODUCTOS` es mas frecuente que `PRODUCCION` y `AMERICA` mas que
+`AMERICAN`, asi que la forma equivocada gana en cuanto sus palabras son mas
+corrientes.
+
+Es el segundo experimento revertido del ciclo, tras el de la guarda de prefijo en
+D23. Los dos se probaron en seco o contra el corpus antes de quedarse, y los dos se
+cayeron por evidencia. **Merece la pena dejarlos escritos: el codigo no enseña las
+opciones que se descartaron, y sin eso alguien las vuelve a intentar.**
+
+### El hallazgo real estaba escondido en las mejoras
+
+Las mejores mejoras del experimento fallido —`Compa Ia`, `Paname a`, `Cab Le`— no
+eran erratas de captura: son **palabras partidas por la Ñ que el sistema de origen
+destruyo**. Al eliminar el caracter quedo un hueco, y la palabra se rompio en dos:
+
+```
+COMPAÑIA  -> COMPA IA (191)    PANAMEÑA -> PANAME A (131)
+DISEÑO    -> DISE O   (122)    EMPEÑO   -> EMPE O   (31)
+```
+
+El fragmento suelto no coincide con nada: ni con el catalogo, ni con la misma
+empresa escrita bien, ni con el gazetteer.
+
+Se enumeran las **reconstrucciones**, no el patron. Un patron general —«token corto
+suelto tras una palabra»— captura `RENT A HOUSE`, `TODO A DOLLAR`, `POLLO A LA LEÑA`
+y las iniciales de segundo nombre (`HOSPITAL MANUEL A GUERRERO`), que estan bien
+escritas. Es la leccion de D22 aplicada: enumerar el destino escala, enumerar el
+patron no.
+
+27 reconstrucciones, verificadas una a una contra el corpus. Incluyen apellidos
+panameños corrientes que sufrian lo mismo: `MU OZ` -> `MUNOZ`, `PE A` -> `PENA`,
+`CASTA EDA` -> `CASTANEDA`, `CEDE O` -> `CEDENO`.
+
+### Efecto medido
+
+| | Antes (D29) | Despues |
+|---|---:|---:|
+| Con sector CIIU | 196.074 | **196.205** |
+| Cobertura sobre empleadores | 63,34 % | **63,38 %** |
+| Empleadores únicos (maestro) | 198.690 | **198.549** |
+| Consolidación | 35,8 % | **35,9 %** |
+
+La ganancia de sector es pequeña; la de **consolidacion** es la que importa. 141
+empleadores duplicados desaparecieron porque `COMPA IA X` y `COMPANIA X` volvieron a
+ser la misma empresa. En un maestro corporativo eso vale mas que un sector.
+
+### Anotado
+
+**R14 — La Ñ destruida es un defecto del sistema de origen.** Las 27 reconstrucciones
+tapan los casos frecuentes; la solucion de fondo es pedir el campo sin la
+transformacion que lo rompe. Ya estaba en las limitaciones del documento tecnico
+(«tildes y eñes destruidas aguas arriba»), pero hasta ahora no se habia medido su
+costo: **2.280 ocurrencias y al menos 141 empleadores duplicados**.
+
+---
+
 ## D29 - El ultimo bloque sin auditar, y el cierre del ciclo gratuito
 
 - **Fecha:** 2026-08-08

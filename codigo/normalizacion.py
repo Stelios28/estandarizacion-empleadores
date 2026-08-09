@@ -93,6 +93,15 @@ def limpiar(crudo: str) -> tuple[str, list[str]]:
     # Siglas que el origen escribió con las letras sueltas. Se unen antes de
     # tokenizar o quedan como dos tokens de una letra y la sigla se pierde:
     # 196 registros escriben `P H MULTIPLAZA` y 957 escriben `PH MULTIPLAZA`.
+    # Palabras que la Ñ destruida partió en dos (`COMPA IA`, `PANAME A`). Se
+    # reconstruyen antes que nada: si no, el fragmento suelto contamina la
+    # tokenización, el agrupamiento y el nombre canónico (D30).
+    for rx, reemplazo, marca in reglas.PALABRAS_PARTIDAS:
+        nuevo = rx.sub(reemplazo, colapsado)
+        if nuevo != colapsado:
+            colapsado = nuevo
+            traza.append(marca)
+
     for rx, reemplazo, marca in reglas.SIGLAS_SEPARADAS:
         nuevo = rx.sub(reemplazo, colapsado)
         if nuevo != colapsado:
