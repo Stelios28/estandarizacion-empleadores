@@ -221,6 +221,107 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D28 - R13 cerrado, y el metodo deterministico toca su limite
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** sexta iteracion del muestreo. Objetivo: cerrar R13, que D27 dejo abierto.
+
+### R13 cerrado, y una correccion mia
+
+D27 dijo que la propagacion por zona de duda mostraba «10-20 % de destinos dudosos».
+Esa cifra salio de leer 40 casos sueltos y **era erronea**.
+
+Al listar los 783 pares completos, ordenados por similitud, la via esta sana:
+
+```
+POL JJ VALLARINO         <- POLICLINICA JJ VALLARINO JUAN DIAZ   76
+CAJA SEG SOC             <- CJA DE SEGURO SOCIAL                 77
+HSBC USA                 <- HSBC BANK USA                        76
+COL OCTAVIO CRESPO       <- COLEGIO DANIEL OCTAVIO CRESPO        76
+ESTACION DON BOSCO       <- ESTACION SHELL DON BOSCO             85
+J COMUNAL PLAYA LEONA    <- JUNTA COMUNAL DE PLAYA LEONA         85
+```
+
+Se midio el patron de riesgo concreto —heredar cuando lo unico compartido es un
+toponimo— y salieron **3 casos de 783**, los tres correctos (`ALBROOK BOWLIN` de
+`BOWLING ALBROOK MALL`, `FUETE CLAYTON` de `ARMY FUERTE CLAYTON`). El unico error
+claro de toda la lista fue `PIQUERA DEL VALLE DE URRACA` heredando «enseñanza» de
+una escuela del mismo valle; la piquera es la parada de taxis del barrio, y entro al
+catalogo como transporte terrestre.
+
+**Leccion sobre el propio metodo:** una muestra de 40 sirve para *encontrar*
+candidatos, no para *estimar* una tasa. D27 uso la muestra para las dos cosas y la
+segunda salio mal. Enumerar los 783 costo lo mismo que muestrearlos.
+
+### El sufijo societario pegado al nombre
+
+`AMERICAN SPORTSWEARSA`, `PP CONSTRUCCIONESSA`, `PANAMEA DE PLASTICOSSA`. El
+capturista se comio el espacio y el token deja de coincidir con nada: ni con el
+catalogo ni con la variante bien escrita del mismo empleador.
+
+La guarda es estricta —**solo se separa si lo que queda es una palabra del
+catalogo**— porque sin ella el corte es arbitrario. Aun asi quedan tres falsos
+positivos aceptados (`FINCASA` es una financiera, no una finca) contra 52 aciertos.
+
+Vale mas por la agrupacion que por el sector: `AMERICAN SPORTSWEARSA` vuelve a ser
+el mismo empleador que `AMERICAN SPORTSWEAR S A`, que arrastra 37 registros.
+
+### `TRADE` faltaba por una terminacion
+
+`TRADING` estaba en el catalogo desde el principio. `TRADE` no. 191 registros por
+tres letras.
+
+### La señal que D26 anuncio, ya llego
+
+D26 escribio: *«cuando las diez palabras mas frecuentes del residuo sean todas
+`CORPORATION` y `EXPRESS`, el metodo determinista habra llegado a su limite»*.
+
+Recontado despues de D27, esto es lo que encabeza la lista de palabras no cubiertas,
+ponderada por registros:
+
+```
+CORPORATION 1.426   CENTRO 1.363   CENTER 744   EXPRESS 541
+LATIN 409   COLOMBIA 366   VENEZUELA 356   FAMILIA 327
+CENTRAL 309   LTDA 293   LIMITED 292   STAR 276   WORLD 270
+```
+
+**Todas son palabras de fantasia, formas societarias o toponimos. Ninguna nombra una
+actividad.** La unica rescatable de las treinta primeras fue `TRADE`.
+
+Esto no es que se acabaran las ideas: es que **el nombre de los empleadores que
+quedan no contiene su actividad**. `R P CORPORATION S A` no dice a que se dedica, y
+ninguna regla sobre el texto puede saberlo. Hace falta conocimiento del mundo, que es
+exactamente lo que la fase 7 compra.
+
+### Efecto medido
+
+| | Antes (D27) | Despues |
+|---|---:|---:|
+| Con sector CIIU | 195.381 | **195.752** |
+| Cobertura sobre empleadores | 63,12 % | **63,24 %** |
+| Empleadores únicos (maestro) | 198.750 | **198.690** |
+
+### Balance de las seis tiradas
+
+| Tirada | Enfoque | Registros ganados |
+|---|---|---:|
+| D23 | Aleatorio uniforme | +1.859 |
+| D24 | Aleatorio uniforme, otra semilla | +676 |
+| D25 | Cabeza de la cola por volumen | +1.859 |
+| D26 | Conteo ponderado de vocabulario | +3.476 |
+| D27 | **Auditoria de lo clasificado** | **−933 (correccion)** |
+| D28 | Cierre de R13 + residuos | +371 |
+
+**Neto: +7.308 registros con sector y 1.085 clasificaciones falsas retiradas, sin
+gastar un dolar.** La cobertura paso de 61,26 % a 63,24 % de los empleadores.
+
+El rendimiento por tirada cayo de 1.859 a 371 en la ultima, con la señal de
+vocabulario agotado confirmandolo. **Recomendacion: la siguiente ganancia real ya no
+es gratis.**
+
+---
+
 ## D27 - Auditar lo clasificado, no solo lo que falta
 
 - **Fecha:** 2026-08-08

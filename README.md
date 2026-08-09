@@ -16,7 +16,7 @@ Prueba técnica de Ingeniería de Datos · Panamá · 2026
 | Empleadores identificados | 309.551 · **95,84 %** |
 | Empleadores únicos en el maestro | **200.650** |
 | Consolidación de variantes | 35,5 % |
-| Con sector CIIU asignado | 195.381 · **63,1 %** de los empleadores |
+| Con sector CIIU asignado | 195.752 · **63,2 %** de los empleadores |
 | Pares evaluados | 7,4 M de 30.446 M · **0,024 %** |
 | Tiempo de corrida completa | ~2 minutos |
 
@@ -80,7 +80,7 @@ Documentacion/
   DOCUMENTO_TECNICO.MD    12 secciones, con las 5 preguntas estratégicas
   PROPUESTA_EVOLUCION.MD  De pipeline a activo corporativo
   Mantenimiento/
-    DECISIONS.MD          D1-D27: cada decisión con su motivo y su evidencia
+    DECISIONS.MD          D1-D28: cada decisión con su motivo y su evidencia
     NOTAS_PERFILAMIENTO.MD  Hallazgos del perfilamiento, con cifras
 
 PROJECT_STATE.MD          Estado vivo del proyecto

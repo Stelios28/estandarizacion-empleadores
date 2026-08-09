@@ -103,6 +103,14 @@ def limpiar(crudo: str) -> tuple[str, list[str]]:
     # aquí, antes de tokenizar, para que las tres capas de abajo —tipificación,
     # situación laboral y sector— lo vean ya resuelto. Una sola corrección que
     # sirve a las tres, en lugar de una lista de erratas por capa (D22).
+    # El sufijo societario pegado se separa antes que nada: `SPORTSWEARSA` tiene
+    # que volver a ser `SPORTSWEAR SA` para que las capas siguientes —truncación,
+    # erratas, catálogo— vean la palabra que hay debajo (D28).
+    sueltos, hubo = reglas.separar_sufijo_pegado(colapsado.split())
+    if hubo:
+        colapsado = ' '.join(sueltos)
+        traza.append('sufijo_societario_despegado')
+
     completos, hubo = reglas.completar_truncadas(colapsado.split())
     if hubo:
         colapsado = ' '.join(completos)

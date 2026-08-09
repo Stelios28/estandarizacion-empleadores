@@ -213,6 +213,34 @@ RAICES_TRUNCADAS: list[tuple[str, str]] = [
 ]
 
 
+# --- Sufijo societario pegado al nombre (D28) ------------------------------
+# `AMERICAN SPORTSWEARSA`, `PP CONSTRUCCIONESSA`, `PANAMEA DE PLASTICOSSA`. El
+# capturista se comió el espacio y el token deja de coincidir con nada: ni con el
+# catálogo CIIU ni con la variante bien escrita del mismo empleador.
+#
+# La guarda es estricta: **solo se separa si lo que queda es una palabra del
+# catálogo**. Sin ella el corte es arbitrario y rompe nombres legítimos. Aun así
+# quedan tres falsos positivos aceptados —`FINCASA` es una financiera, no una
+# finca— contra 52 aciertos.
+_SUFIJOS_PEGADOS = ('SAS', 'LTDA', 'CORP', 'INC', 'LTD', 'SRL', 'SA', 'CA')
+_LARGO_MIN_BASE = 5
+
+
+def separar_sufijo_pegado(tokens: list[str]) -> tuple[list[str], bool]:
+    """Separa `PLASTICOSSA` en `PLASTICOS SA` cuando la base está en el catálogo."""
+    salida, cambio = [], False
+    for t in tokens:
+        for s in _SUFIJOS_PEGADOS:
+            if (len(t) - len(s) >= _LARGO_MIN_BASE and t.endswith(s)
+                    and t[:-len(s)] in REGLAS_CIIU):
+                salida.extend((t[:-len(s)], s))
+                cambio = True
+                break
+        else:
+            salida.append(t)
+    return salida, cambio
+
+
 def completar_truncadas(tokens: list[str]) -> tuple[list[str], bool]:
     """Devuelve los tokens con las raíces truncadas completadas, y si hubo cambio."""
     salida, cambio = [], False
@@ -1222,6 +1250,12 @@ _regla('PRODUCTOS AGRICOLAS|PRODUCTOS AGROPECUARIOS', 'A', '01',
 # `CRANE` es grúa: la regla de D24 estaba solo en español.
 _regla('CRANE|CRANES', 'H', '52',
        'Almacenamiento y actividades de apoyo al transporte', 7)
+# `TRADING` estaba y `TRADE` no. 191 registros por una `-ING` (D28).
+_regla('TRADE|TRADERS', 'G', '46', 'Comercio al por mayor', 6)
+# La piquera es la parada de taxis del barrio. Salió auditando la propagación:
+# `PIQUERA DEL VALLE DE URRACA` heredaba «enseñanza» de una escuela del mismo
+# valle, que era el único caso de herencia claramente equivocada de los 783.
+_regla('PIQUERA|PIQUERAS', 'H', '49', 'Transporte terrestre', 8)
 
 FRASES_CIIU: list[str] = sorted(
     (k for k in REGLAS_CIIU if ' ' in k), key=len, reverse=True
