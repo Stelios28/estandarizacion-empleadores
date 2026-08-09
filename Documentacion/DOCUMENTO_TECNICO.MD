@@ -22,7 +22,7 @@ cada decisión.
 | Tiempo total de ejecución | **~2 minutos** en un portátil |
 | Pares comparados vs. espacio total | 7,4 M de 30.446 M · **0,024 %** |
 
-El corte del 63,2 % en cobertura sectorial no es una limitación del método: es el
+El corte del 63,4 % en cobertura sectorial no es una limitación del método: es el
 punto exacto donde la evidencia interna se agota. Los 84.476 clústeres restantes
 son marcas sin palabra descriptiva —`BRICKHAUS`, `SOLINTECSA`, `WILHELMSEN`— que
 requieren conocimiento externo.
@@ -111,7 +111,7 @@ prueba_tecnica_ing_datos.xlsx  (solo lectura, nunca se modifica)
 ┌─ BLOQUE 3 ── fases 8, 9, 11 ───────────────────────────────────────┐
 │  Razón social canónica · Sector CIIU por voto ponderado             │
 │  Reproceso iterativo: el clúster propaga lo aprendido               │
-│  113.974 clústeres clasificados ·  84.716 pendientes                │
+│  114.040 clústeres clasificados ·  84.476 pendientes                │
 └─────────────────────────────────────────────────────────────────────┘
         ▼
 ┌─ BLOQUE 4 ── fase 7 ───────────────────────── (requiere credencial) ┐
@@ -274,13 +274,13 @@ Cascada determinística de la evidencia más fuerte a la más débil:
 
 | # | Fuente | Clústeres | % |
 |---|---|---:|---:|
-| 1 | Gazetteer — 245 empleadores ancla de Panamá | 3.710 | 1,9 % |
+| 1 | Gazetteer — 245 empleadores ancla de Panamá | 3.706 | 1,9 % |
 | 2 | Propiedad horizontal (forma jurídica, no palabra clave) | 873 | 0,4 % |
-| 3 | Frase del catálogo (`SALON DE BELLEZA`, `CAJA DE SEGURO`) | 8.156 | 4,1 % |
-| 4 | Token con peso (`FERRETERIA` p8 > `SERVICIOS` p1) | 95.470 | 48,0 % |
+| 3 | Frase del catálogo (`SALON DE BELLEZA`, `CAJA DE SEGURO`) | 8.189 | 4,1 % |
+| 4 | Token con peso (`FERRETERIA` p8 > `SERVICIOS` p1) | 95.523 | 48,1 % |
 | 5 | Prefijo comercial pegado al nombre (`REFRICAR`, `REFRIHOGAR`) | 78 | 0,0 % |
-| 6 | Token aproximado (errata o singular/plural) | 5.154 | 2,6 % |
-| 7 | Propagación por zona de duda | 455 | 0,2 % |
+| 6 | Token aproximado (errata o singular/plural) | 5.147 | 2,6 % |
+| 7 | Propagación por zona de duda | 446 | 0,2 % |
 | 8 | Reclasificación (no es un empleador) | 78 | 0,0 % |
 | — | **Sin evidencia interna → fase 7** | **84.476** | **42,5 %** |
 
@@ -291,7 +291,7 @@ nació de que el comercio panameño bautiza pegando el giro al nombre. El nivel 
 creció de ~60 a 245 anclas con investigación de dominio aportada por negocio (D13,
 D25).
 
-El nivel 6 **encogió** de 8.029 a 5.154 clústeres, y eso fue una mejora: la auditoría
+El nivel 6 **encogió** de 8.029 a 5.147 clústeres, y eso fue una mejora: la auditoría
 de D27 encontró que la comparación aproximada estaba clasificando mal 1.085 registros
 —`PRODUCTOS` se parece a `PRODUCTIONS` en un 90 %, que es exactamente el umbral, y
 mandaba `PRODUCTOS OCEANOS` a «productoras de cine»—. Ver §9.1.
@@ -574,10 +574,14 @@ educativo panameño, no se infieren del corpus por mucho que se lo analice. Se a
 la justificación de que `reglas.py` esté separado del motor: integrar 125 entidades nuevas
 fue editar un diccionario, no rediseñar nada.
 
-Efecto acumulado: cobertura sectorial 52,8 % → **63,2 %**; `No identificable - Falta
+Efecto acumulado: cobertura sectorial 52,8 % → **63,4 %**; `No identificable - Falta
 informacion` de 148.260 a **250** registros; cola de validación externa de 103.139 a
-**84.716** clústeres; y 1.085 clasificaciones falsas retiradas en la auditoría de D27,
+**84.476** clústeres; y 1.085 clasificaciones falsas retiradas en la auditoría de D27,
 que es la única decisión del proyecto que empeora la métrica principal a propósito.
+
+El ciclo se cerró con tres señales medidas de agotamiento (D28, D29): las trece
+palabras más frecuentes del residuo ya no nombran actividades, el rendimiento por
+iteración cayó de 1.859 a 19 registros, y el último bloque sin auditar rindió un 3 %.
 
 ---
 
