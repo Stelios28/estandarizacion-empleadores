@@ -221,6 +221,119 @@ Estados: `PROPUESTA` · `VIGENTE` · `REEMPLAZADA` · `REVOCADA`
 
 ---
 
+## D25 - Mirar la cabeza de la cola, no el residuo entero
+
+- **Fecha:** 2026-08-08
+- **Estado:** VIGENTE
+- **Origen:** tercera iteracion del muestreo aleatorio, reenfocada tras medir la cola
+  de la fase 7 para responder una pregunta de Javier sobre el costo.
+
+### El cambio de foco
+
+Las dos tiradas anteriores muestrearon **uniformemente** sobre nombres distintos. Al
+medir la cola de la fase 7 para estimar el costo salio un dato que cambia el metodo:
+
+| Tamaño del cluster | Clusteres | Registros | Acumulado |
+|---|---:|---:|---:|
+| 21+ registros | 33 | 846 | 0,7 % |
+| 6-20 | 957 | 7.859 | 7,0 % |
+| 3-5 | 6.652 | 22.799 | 25,3 % |
+| 2 | 13.342 | 26.684 | **46,8 %** |
+| 1 | 66.178 | 66.178 | 100 % |
+
+El muestreo uniforme cae casi siempre en la ultima fila: 66.178 de 87.162 clusteres
+son de un solo registro. Se estaba mirando el 53 % que menos importa.
+
+Ordenando los clusteres **por registros que arrastran** aparece otro mundo. No hay
+marcas raras de un registro: hay empresas grandes cuya actividad el catalogo no
+nombraba.
+
+### Lo que estaba en la cabeza de la cola
+
+```
+41  FRANQUICIAS PANAMENAS      37  AMERICAN SPORTSWEAR      35  STAR CONTACT
+32  MAERSK LINE CENTRAL AM     29  ADIDAS LATIN AMERICA     29  AXA ASSISTANCE
+27  H T TZANETATOS             24  VARELA HERMANOS          23  ERNST AND YOUNG
+23  MOSSACK FONSECA            22  ALEMAN CORDERO Y GALINDO LEE
+21  ICAZA GONZALEZ RUIZ Y ALEMAN                19  PATTON MORENO Y ASVAT
+```
+
+Tres familias, todas medidas contra el residuo antes de escribir una linea:
+
+**1. Multinacionales que faltaban en el gazetteer** (~500 registros). `MAERSK` solo
+aparece en 38 clusteres distintos con 163 registros, escrito de todas las formas
+posibles: `MAERSK LINE`, `MAERKS`, `SEALAND MAERKS`, `DAMCO MAERSK`.
+
+**2. Casas comerciales y familias empresarias panameñas** (~230 registros). Varela
+Hermanos, Felipe Motta, Tagaropulos, Cochez, Cardoze y Lindo, H. Tzanetatos, Editora
+El Panama America. Son nombres propios: sin conocimiento del pais no hay forma de
+saber que Varela Hermanos hace ron y Cochez vende ferreteria.
+
+**3. Bufetes de abogados** (~150 registros). Panama es plaza de servicios legales y
+sus firmas se nombran con los apellidos de los socios —`ALEMAN CORDERO Y GALINDO
+LEE`, `ICAZA GONZALEZ RUIZ Y ALEMAN`, `PATTON MORENO Y ASVAT`— **sin ninguna palabra
+que diga a que se dedican**. Por eso ninguno tenia sector.
+
+Se resistio la tentacion de escribir una regla del tipo «dos apellidos unidos por Y
+es un bufete»: `CARDOZE Y LINDO` distribuye alimentos, `COCHEZ Y CIA` vende
+ferreteria y `VARELA HERMANOS` hace ron. El patron existe pero no discrimina. Cada
+bufete entra por nombre, y siempre con **dos** apellidos: `ALEMAN` o `ARIAS` sueltos
+son apellidos corrientes en Panama (la leccion de D15).
+
+### Vocabulario que el catalogo no tenia
+
+| Regla | Registros | Nota |
+|---|---:|---|
+| `EDITORA` / `IMPRESORA` / `LITOGRAFIA` | 183 | Edicion (J/58) e impresion (C/18) |
+| `CALL CENTER` / `TELEMARKETING` / `BPO` | 140 | Panama es plaza de call centers |
+| `SPORTSWEAR` / `T SHIRTS` / `MAQUILA` | 90 | Confeccion (C/14) |
+| `HELADOS` / `HELADERIA` | 67 | |
+| `EMPAQUES` / `ENVASES` | 66 | |
+| `EMPENO` | 49 | Credito prendario (K/64), no comercio |
+| `STEAMSHIP` | 37 | |
+| `RAMA JUDICIAL` / `PALACIO LEGISLATIVO` / `CONTRALORIA` | 32 | Organos del Estado que no son ministerio |
+| `MOLINO` / `HARINAS` | 27 | |
+| `MONTACARGAS` / `FORKLIFT` | 27 | |
+
+### Un fallo de robustez que ya iba por la tercera vez
+
+La corrida murio con `PermissionError` al escribir `dataset_resultado.xlsx`, que
+estaba abierto en Excel. Y murio **despues** de haber hecho todo el trabajo: los CSV
+ya escritos, los KPIs sin escribir y el resumen sin imprimir.
+
+Habia pasado tres veces durante el ciclo de revision, siempre por la misma razon —
+tener el entregable abierto para mirarlo, que es exactamente lo que se espera que
+haga quien revisa.
+
+Un archivo bloqueado es un **aviso**, no un fallo del pipeline. `guardar_excel()`
+captura el error, lo registra y sigue; al final el resumen dice cuales quedaron sin
+regenerar y que los CSV si estan al dia.
+
+### Efecto medido
+
+| | Antes (D24) | Despues |
+|---|---:|---:|
+| Con sector CIIU | 190.979 | **192.838** |
+| Cobertura sobre empleadores | 61,70 % | **62,30 %** |
+| Empleador sin sector | 124.546 | **122.694** |
+| Empleadores identificados | 309.551 | **309.552** |
+
+### La leccion del metodo
+
+Ordenar por volumen no es lo mismo que muestrear al azar, y ninguna de las dos
+sustituye a la otra:
+
+| Vista | Encuentra | Coste de encontrarlo |
+|---|---|---|
+| Aleatoria uniforme | El patron sin palabra (`M S`, `REFRICAR`) | Cae en la cola larga: mucho ruido |
+| **Cabeza de la cola** | **La empresa grande que nadie nombro** | **Directa: 90 lineas cubren 1.859 registros** |
+
+Y hay un argumento economico: la cabeza de la cola es exactamente lo que la fase 7
+consultaria primero, porque el presupuesto se ordena por registros. Cada empresa
+resuelta aqui es una consulta que no se paga.
+
+---
+
 ## D24 - Segunda tirada aleatoria: el giro pegado al nombre
 
 - **Fecha:** 2026-08-08

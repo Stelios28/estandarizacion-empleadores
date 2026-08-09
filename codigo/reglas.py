@@ -1091,6 +1091,42 @@ _regla('SERVICIOS|SERVICE|SERVICES|GROUP|GRUPO|CORPORACION|EMPRESA|COMPANIA|'
        'N', '82', 'Actividades de apoyo a empresas', 1)
 
 # Frases multipalabra: se buscan sobre el nombre completo, antes que los tokens.
+# --- Vocabulario de la cabeza de la cola de la fase 7 (D25) ----------------
+# Salió de mirar los clústeres sin sector **ordenados por registros que
+# arrastran**, que es distinto de mirarlos al azar: aquí no hay marcas raras de
+# un solo registro, hay empresas grandes cuya actividad el catálogo no nombraba.
+# Cada línea se midió contra el residuo antes de escribirla.
+_regla('CALL CENTER|CONTACT CENTER|TELEMARKETING|TELEMERCADEO|BPO|'
+       'CENTRO DE LLAMADAS', 'N', '82',
+       'Actividades administrativas y de apoyo de oficina', 8)   # 140 registros
+_regla('EDITORA|EDITORIAL|EDITORES|PERIODICO|DIARIO', 'J', '58',
+       'Actividades de edición', 8)
+_regla('IMPRESORA|IMPRESORES|IMPRENTA|LITOGRAFIA|SERIGRAFIA|TIPOGRAFIA|'
+       'ARTES GRAFICAS', 'C', '18',
+       'Impresión y reproducción de grabaciones', 8)             # 183 con las de arriba
+_regla('SPORTSWEAR|T SHIRTS|TSHIRTS|CAMISERIA|SASTRERIA|MAQUILA|'
+       'CONFECCIONES', 'C', '14', 'Confección de prendas de vestir', 8)
+_regla('STEAMSHIP|STEAM SHIP|LINE COMPANY', 'H', '50',
+       'Transporte marítimo', 8)
+_regla('EMPAQUES|EMPAQUE|ENVASES|EMBALAJE|EMBALAJES', 'C', '22',
+       'Fabricación de productos de caucho y plástico', 7)
+# La casa de empeño es crédito prendario: presta con garantía, no vende.
+_regla('EMPENO|EMPENOS|CASA DE EMPENO|PRENDARIO|MONTEPIO', 'K', '64',
+       'Actividades de servicios financieros', 8)
+_regla('MOLINO|MOLINOS|HARINAS|HARINERA|ARROCERA|TRILLADORA', 'C', '10',
+       'Elaboración de productos alimenticios', 8)
+_regla('HELADOS|HELADERIA|PALETERIA|SORBETERIA', 'C', '10',
+       'Elaboración de productos alimenticios', 7)
+_regla('MONTACARGAS|FORKLIFT|GRUAS HORQUILLA', 'G', '46',
+       'Comercio al por mayor', 7)
+_regla('FERTILIZANTES|FERTILIZANTE|AGROQUIMICOS|AGROQUIMICA|PLAGUICIDAS|'
+       'INSECTICIDAS', 'C', '20', 'Fabricación de sustancias químicas', 8)
+# Órganos del Estado que el catálogo no nombraba y que no son un ministerio.
+_regla('RAMA JUDICIAL|PALACIO LEGISLATIVO|ASAMBLEA NACIONAL|CONSEJO PROVINCIAL|'
+       'CONSEJO MUNICIPAL|CONTRALORIA|PROCURADURIA|DEFENSORIA DEL PUEBLO|'
+       'TRIBUNAL ELECTORAL|REGISTRO PUBLICO', 'O', '84',
+       'Administración pública y defensa', 9)
+
 FRASES_CIIU: list[str] = sorted(
     (k for k in REGLAS_CIIU if ' ' in k), key=len, reverse=True
 )
@@ -1269,6 +1305,66 @@ GAZETTEER: dict[str, tuple[str, str, str]] = {
     # --- Manufactura y alimentos -------------------------------------------
     'CERVECERIA NACIONAL': ('Cervecería Nacional, S.A.', 'C', '11'),
     'NESTLE': ('Nestlé Panamá, S.A.', 'C', '10'),
+
+    # --- Cabeza de la cola de la fase 7 (D25) -----------------------------
+    # Empresas que arrastran 15-40 registros cada una y que la fase 7 habría
+    # pagado por resolver. Cada entrada se midió contra el residuo: entre todas
+    # cubren 1.779 registros que iban a la consulta externa.
+    'MAERSK': ('Maersk Panamá, S.A.', 'H', '50'),
+    'MAERKS': ('Maersk Panamá, S.A.', 'H', '50'),
+    'SEALAND': ('Sealand - A Maersk Company', 'H', '50'),
+    'ADIDAS': ('Adidas Latin America, S.A.', 'G', '46'),
+    'AXA ASSISTANCE': ('AXA Assistance Panamá, S.A.', 'K', '65'),
+    'ERNST AND YOUNG': ('Ernst & Young Panamá', 'M', '69'),
+    'PRICE WATER HOUSE': ('PricewaterhouseCoopers Panamá', 'M', '69'),
+    'PRICEWATERHOUSE': ('PricewaterhouseCoopers Panamá', 'M', '69'),
+    'PROCTER AND GAMBLE': ('Procter & Gamble Panamá', 'G', '46'),
+    'TETRA PACK': ('Tetra Pak Panamá', 'C', '22'),
+    'TETRA PAK': ('Tetra Pak Panamá', 'C', '22'),
+    'SANOFI': ('Sanofi Aventis de Panamá, S.A.', 'C', '21'),
+    'GLAXO': ('GlaxoSmithKline Panamá, S.A.', 'C', '21'),
+    'GLAXO SMITHKLINE': ('GlaxoSmithKline Panamá, S.A.', 'C', '21'),
+    'ESTEE LAUDER': ('Estée Lauder Panamá', 'G', '46'),
+    'RED BULL': ('Red Bull de Panamá', 'G', '46'),
+    'BRINKS': ('Brink’s de Panamá, S.A.', 'N', '80'),
+    'CANON PANAMA': ('Canon de Panamá, S.A.', 'G', '46'),
+    'KUEHNE': ('Kuehne + Nagel Panamá', 'H', '52'),
+    'ASSICURAZIONI GENERALI': ('Assicurazioni Generali, S.p.A.', 'K', '65'),
+
+    # Casas comerciales y familias empresarias panameñas
+    'VARELA HERMANOS': ('Varela Hermanos, S.A.', 'C', '11'),
+    'FELIPE MOTTA': ('Felipe Motta, S.A.', 'G', '46'),
+    'TAGAROPULOS': ('Tagaropulos, S.A.', 'G', '46'),
+    'COCHEZ': ('Cochez y Compañía, S.A.', 'G', '47'),
+    # `Y` y `AND` son stopwords: el núcleo llega sin ellas, pero la tipificación
+    # consulta el gazetteer sobre el texto limpio, que sí las trae. Las dos formas.
+    'CARDOZE LINDO': ('Cardoze y Lindo, S.A.', 'G', '46'),
+    'CARDOZE Y LINDO': ('Cardoze y Lindo, S.A.', 'G', '46'),
+    'MORGAN MORGAN': ('Morgan & Morgan', 'M', '69'),
+    'TZANETATOS': ('H. Tzanetatos, Inc.', 'G', '46'),
+    'PANAMA AMERICA': ('Editora El Panamá América, S.A.', 'J', '58'),
+    'FRANQUICIAS PANAMENAS': ('Franquicias Panameñas, S.A.', 'I', '56'),
+
+    # Firmas de abogados. Panamá es plaza de servicios legales y sus bufetes se
+    # nombran con los apellidos de los socios, sin ninguna palabra que diga a qué
+    # se dedican — por eso ninguno tenía sector. Entran con dos apellidos, nunca
+    # con uno: `ALEMAN` o `ARIAS` sueltos son apellidos corrientes (ver D15).
+    'MOSSACK FONSECA': ('Mossack Fonseca & Co.', 'M', '69'),
+    'ALEMAN CORDERO': ('Alemán, Cordero, Galindo & Lee', 'M', '69'),
+    'GALINDO LEE': ('Alemán, Cordero, Galindo & Lee', 'M', '69'),
+    'ICAZA GONZALEZ': ('Icaza, González-Ruiz & Alemán', 'M', '69'),
+    'ICAZA GONZALES': ('Icaza, González-Ruiz & Alemán', 'M', '69'),
+    'PATTON MORENO': ('Patton, Moreno & Asvat', 'M', '69'),
+    'ALFARO FERRER': ('Alfaro, Ferrer & Ramírez', 'M', '69'),
+    'MORGAN AND MORGAN': ('Morgan & Morgan', 'M', '69'),
+    'MORGAN Y MORGAN': ('Morgan & Morgan', 'M', '69'),
+    'ARIAS FABREGA': ('Arias, Fábrega & Fábrega', 'M', '69'),
+    'GALINDO ARIAS': ('Galindo, Arias & López', 'M', '69'),
+    'SUCRE ARIAS': ('Sucre, Arias & Reyes', 'M', '69'),
+    'SUCRES ARIAS': ('Sucre, Arias & Reyes', 'M', '69'),
+    'RIVERA BOLIVAR': ('Rivera, Bolívar y Castañeda', 'M', '69'),
+    'TAPIA LINARES': ('Tapia, Linares y Alfaro', 'M', '69'),
+    'FABREGA MOLINO': ('Fábrega Molino', 'M', '69'),
     'EMPRESA PANAMENA ALIMENTOS': ('Empresa Panameña de Alimentos', 'C', '10'),
     'GRUPO MELO': ('Grupo Melo, S.A.', 'C', '10'),
     'EMPRESAS MELO': ('Empresas Melo, S.A.', 'C', '10'),

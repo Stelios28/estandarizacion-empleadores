@@ -31,6 +31,25 @@ import sector as sector_mod
 
 TIPOS_EMPLEADOR = {'EMPRESA', 'PERSONA_NATURAL'}
 
+# Excel bloquea el archivo que tiene abierto, y la corrida moría con
+# `PermissionError` **después** de haber hecho todo el trabajo: los CSV ya
+# escritos, los KPIs sin escribir y el resumen sin imprimir. Pasó tres veces
+# durante el ciclo de revisión, siempre por tener el entregable abierto para
+# mirarlo. Un archivo bloqueado es un aviso, no un fallo del pipeline (D25).
+_EXCEL_OMITIDOS: list[str] = []
+
+
+def guardar_excel(wb, nombre: str) -> bool:
+    """Guarda el libro; si el archivo está abierto, avisa y sigue."""
+    try:
+        wb.save(os.path.join(comun.DIR_SALIDAS, nombre))
+        return True
+    except PermissionError:
+        _EXCEL_OMITIDOS.append(nombre)
+        comun.log('  AVISO: %s está abierto en Excel; no se regeneró. '
+                  'Ciérralo y vuelve a correr esta fase.' % nombre)
+        return False
+
 # Tipos que no son un empleador corporativo pero cuyo texto sí puede nombrar la
 # actividad de la que vive la persona: el oficio del independiente, el empleador
 # del que se jubiló, la universidad donde estudia. Conservan el sector aunque el
@@ -211,7 +230,7 @@ def main() -> None:
         ws.append(['nombre_original', 'nombre_propuesto', 'sector_propuesto'])
         for fila in dataset:
             ws.append(list(fila))
-        wb.save(os.path.join(comun.DIR_SALIDAS, 'dataset_resultado.xlsx'))
+        guardar_excel(wb, 'dataset_resultado.xlsx')
 
     # ---- archivo de trabajo para el ciclo de revisión ---------------------
     # Un registro está *resuelto* solo si es un empleador identificado Y tiene
@@ -271,7 +290,7 @@ def main() -> None:
         ws2.freeze_panes = 'A2'
         ws2.auto_filter.ref = ws2.dimensions
 
-        wb.save(os.path.join(comun.DIR_SALIDAS, 'revision_pendiente.xlsx'))
+        guardar_excel(wb, 'revision_pendiente.xlsx')
         resumen_bloques = collections.Counter(f[0] for f in revision)
         comun.log('  revision_pendiente.xlsx: %d filas | %s'
                   % (len(revision),
@@ -337,6 +356,12 @@ def main() -> None:
     for f in sorted(os.listdir(comun.DIR_SALIDAS)):
         ruta = os.path.join(comun.DIR_SALIDAS, f)
         print('  %-32s %8.1f KB' % (f, os.path.getsize(ruta) / 1024))
+
+    if _EXCEL_OMITIDOS:
+        print('\n*** SIN REGENERAR (abiertos en Excel): %s'
+              % ', '.join(_EXCEL_OMITIDOS))
+        print('    Los CSV y los KPIs sí están actualizados. Cierra esos archivos')
+        print('    y vuelve a correr solo esta fase para ponerlos al día.')
 
 
 if __name__ == '__main__':
